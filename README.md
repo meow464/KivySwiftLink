@@ -3,7 +3,7 @@
 ...
 ...
 
-## Arguement Types:
+## Arg Types:
 ### Special list types:
         int_list = const int*
         float_list = const float*
@@ -15,7 +15,7 @@
 
     float = float
     double = double
-    long = int64
+    long = long (int64)
     int = int32
 
 ## Generate Files:
@@ -26,10 +26,10 @@
             then type: `python pythoncall_builder.py mypythonfile.py`
 
 ## Writing Python File:
-    code:
-    
     Pick your Class Name vicely..
     it will be the main name type for the generated files and Protocol/Struct name
+    
+    code:
     
     class PythonSwiftTest:
         
