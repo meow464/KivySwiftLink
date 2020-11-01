@@ -8,7 +8,10 @@ def zipdir(path,src, ziph):
     # ziph is zipfile handle
     for root, dirs, files in os.walk(path):
         for file in files:
-            ziph.write(os.path.join(root, file))
+            if file != ".DS_Store":
+                ziph.write(os.path.join(root, file))
+                _file,ext = file.split(".")
+                print(_file,ext)
         if len(dirs) != 0:
             src.append((root,dirs))
 
