@@ -2,3 +2,4 @@
 .DS_Store
 example.ini
 builds/
+builds/.DS_Store
