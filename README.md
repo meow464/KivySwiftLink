@@ -2,7 +2,7 @@
 
 
 
-Arguement Types:
+# Arguement Types:
 
     Special list types:
         int_list = const int*
@@ -18,7 +18,7 @@ Arguement Types:
     long = int64
     int = int32
 
-Generate Files:
+# Generate Files:
     
     in Terminal:
         1. goto to the root of "PythonSwiftLink" folder
