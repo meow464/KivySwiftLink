@@ -17,3 +17,8 @@ Arguement Types:
     double = double
     long = int64
     int = int32
+
+Generate Files:
+    
+    in Terminal:
+        1. goto to the root of the folder containing the ""
