@@ -21,4 +21,11 @@ Arguement Types:
 Generate Files:
     
     in Terminal:
-        1. goto to the root of the folder containing the ""
+        1. goto to the root of "PythonSwiftLink" folder
+        2. type "python pythoncall_builder.py <filename.py>"
+            if filename = mypythonfile.py
+            then type: "python pythoncall_builder.py mypythonfile.py"
+
+Writing Python File:
+
+    code:
