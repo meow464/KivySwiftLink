@@ -4,7 +4,7 @@
 
 Arguement Types:
 
-    Special list types
+    Special list types:
         int_list = const int*
         float_list = const float*
         double_list = const double*
