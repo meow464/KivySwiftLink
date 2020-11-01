@@ -3,7 +3,6 @@
 
 
 # Arguement Types:
-
     Special list types:
         int_list = const int*
         float_list = const float*
@@ -19,13 +18,11 @@
     int = int32
 
 # Generate Files:
-    
     in Terminal:
         1. goto to the root of "PythonSwiftLink" folder
         2. type "python pythoncall_builder.py <filename.py>"
             if filename = mypythonfile.py
             then type: "python pythoncall_builder.py mypythonfile.py"
 
-Writing Python File:
-
+# Writing Python File:
     code:
