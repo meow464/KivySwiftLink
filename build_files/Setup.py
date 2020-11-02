@@ -7,6 +7,7 @@ from files_list import open_config
 from copy import deepcopy
 from os.path import dirname, join, sep
 from os import environ
+import json
 
 src_path = build_path = dirname(__file__)
 
@@ -80,22 +81,39 @@ ext_modules = []
 src_path = build_path = dirname(__file__)
 base_flags = determine_base_flags()
 
-cfg = open_config()
+modules_path = dirname(os.path.abspath(__file__))
+cfg = open_config(modules_path)
 file_list = cfg.items()
-for _file in file_list: 
-    _deps = _file['depends']
-    _classname = _file['classname']
-    _filename = _file['dirname']
-
-    osx_flags = {
-        'extra_link_args': [],
-        #'extra_compile_args': ['-ObjC++'],
-        'extra_compile_args': ['-ObjC'],
-        'depends': [
-                    '%s/%s.m' % (_filename,_filename)
-                    ]}
-    sources['%s/%s_cy.pyx' % (_filename,_filename)] = merge(base_flags, osx_flags)
-    sources['%s/%s_cy.pyx' % (_filename,_filename)]['module_name'] = _classname
+print(list(file_list))
+for key,_file in file_list: 
+    if key != "DEFAULT":
+        print(_file['depends'],type(_file['depends']))
+        _deps = json.loads(_file['depends'])
+        print(_deps,type(_deps))
+        _t = _file['type']
+        _classname = _file['classname']
+        _filename = _file['dirname']
+        print("type:",_t)
+        if _t != 'custom':
+            osx_flags = {
+                'extra_link_args': [],
+                #'extra_compile_args': ['-ObjC++'],
+                'extra_compile_args': ['-ObjC'],
+                'depends': [
+                            '%s/%s.m' % (_filename,_filename)
+                            ] + _deps}
+            sources['%s/%s_cy.pyx' % (_filename,_filename)] = merge(base_flags, osx_flags)
+            sources['%s/%s_cy.pyx' % (_filename,_filename)]['module_name'] = _classname
+        else:
+            osx_flags = {
+                'extra_link_args': [],
+                #'extra_compile_args': ['-ObjC++'],
+                'extra_compile_args': ['-ObjC'],
+                'depends': _deps}
+            print('%s/%s.pyx' % (_filename,_filename))
+            sources['%s/%s.pyx' % (_filename,_filename)] = merge(base_flags, osx_flags)
+            sources['%s/%s.pyx' % (_filename,_filename)]['module_name'] = _classname
+print(sources)
 # osx_flags = {
 #     'extra_link_args': [],
 #     #'extra_compile_args': ['-ObjC++'],

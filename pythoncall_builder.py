@@ -6,13 +6,14 @@ from pprint import pprint
 import re
 import sys
 import os
+import subprocess
+from build_files.pack_files import pack_all
 
 print(os.path.basename(sys.argv[0]))
 print(os.path.dirname(sys.argv[0]))
 root_path = os.path.dirname(sys.argv[0])
-script = sys.argv[1]
 
-print("script",script)
+
 
 calltitle = None 
 
@@ -74,7 +75,7 @@ def gen_send_start_function(pointers:list):
     pointers.append(send)
 
 def parse_code(string:str):
-    module = ast.parse(test)
+    module = ast.parse(string)
     func_pointers = []
     send_functions = []
     
@@ -193,7 +194,7 @@ def gen_cyfunction_pointers(func_list,ptr_types,objc=True):
         function_pointers.append(obj_point)
         
 
-        for real_func in func_pointers:
+        for real_func in func_list:
             #args = real_func[]
             
             real_arg = real_func['real_args']
@@ -234,8 +235,8 @@ def fill_cstruct(pointers:list):
     assign_struct = "\t\tcdef %sStruct callbacks = [" % calltitle
 
     assign_strings = [assign_struct]
-    size = len(func_pointers) -1
-    for i,func in enumerate(func_pointers):
+    size = len(pointers) -1
+    for i,func in enumerate(pointers):
         if i != size:
             string = "\t\tcy_%s," % (func['name'])
         else:
@@ -447,71 +448,82 @@ def gen_objc_m_header(title):
 ############# Builder ########################################
 ##############################################################
 
+def build_py_files():
+    script = sys.argv[2]
+    pyfile = open("{}".format(script), "r" )
+    test = pyfile.read()
 
-pyfile = open("{}".format(script), "r" )
-test = pyfile.read()
+    functions = parse_code(test)
+    func_pointers,send_functions,ptr_types = functions
 
-functions = parse_code(test)
-func_pointers,send_functions,ptr_types = functions
+    pointer_types = []
+    c_pointers = gen_cyfunction_pointers(func_pointers,ptr_types,False)
 
-pointer_types = []
-c_pointers = gen_cyfunction_pointers(func_pointers,ptr_types,False)
+    objc_pointer_types = []
+    objc_pointers = gen_cyfunction_pointers(func_pointers,ptr_types,True)
 
-objc_pointer_types = []
-objc_pointers = gen_cyfunction_pointers(func_pointers,ptr_types,True)
+    try:
+        os.mkdir("builds")
+        #os.mkdir("builds/%s" % calltitle.lower())
+    except:
+        print("builds exist")
+    try:
+        os.mkdir("builds/%s" % calltitle.lower())
+    except:
+        print("builds/%s exist" % calltitle.lower())
+    f = open("builds/{0}/{0}_cy.pyx".format(calltitle.lower()), "w+")
 
-try:
-    os.mkdir("builds")
-    #os.mkdir("builds/%s" % calltitle.lower())
-except:
-    print("builds exist")
-try:
-    os.mkdir("builds/%s" % calltitle.lower())
-except:
-    print("builds/%s exist" % calltitle.lower())
-f = open("builds/{0}/{0}_cy.pyx".format(calltitle.lower()), "w+")
+    f.write("import json\n")
 
-f.write("import json\n")
+    f.write("cdef extern from \"%s.h\":\n\t" % calltitle.lower())
+    f.write("\t".join(c_pointers ) ) 
+    f.write("\n")
+    f.write(gen_c_struct(func_pointers))
+    f.write("\n\n")
+    f.write(gen_structtype_init_funct(calltitle,False) )
+    f.write("\n")
+    f.write(gen_send_functions(send_functions,False))
+    f.write("\n\n")
+    f.write(gen_cython_callbacks(func_pointers))
+    f.write( gen_cython_class(calltitle,"classtest",fill_cstruct(func_pointers)) )
+    #f.write(fill_cstruct(c_pointers))
 
-f.write("cdef extern from \"%s.h\":\n\t" % calltitle.lower())
-f.write("\t".join(c_pointers ) ) 
-f.write("\n")
-f.write(gen_c_struct(func_pointers))
-f.write("\n\n")
-f.write(gen_structtype_init_funct(calltitle,False) )
-f.write("\n")
-f.write(gen_send_functions(send_functions,False))
-f.write("\n\n")
-f.write(gen_cython_callbacks(func_pointers))
-f.write( gen_cython_class(calltitle,"classtest",fill_cstruct(c_pointers)) )
-#f.write(fill_cstruct(c_pointers))
-
-f.write("\n")
-f.close()
+    f.write("\n")
+    f.close()
 
 
-f = open("builds/{0}/{0}.h".format(calltitle.lower()), "w+")
-f.write("#import <Foundation/Foundation.h>\n")
-f.write("".join(objc_pointers ) )
-f.write("\n")
-f.write(gen_objc_struct(func_pointers))
-f.write("\n\n")
-f.write(gen_structtype_init_funct(calltitle,True) )
-f.write("\n")
-f.write(gen_objc_protocol(send_functions,calltitle))
-f.write("\n")
-f.write(gen_send_functions(send_functions,True,None,True))
+    f = open("builds/{0}/{0}.h".format(calltitle.lower()), "w+")
+    f.write("#import <Foundation/Foundation.h>\n")
+    f.write("".join(objc_pointers ) )
+    f.write("\n")
+    f.write(gen_objc_struct(func_pointers))
+    f.write("\n\n")
+    f.write(gen_structtype_init_funct(calltitle,True) )
+    f.write("\n")
+    f.write(gen_objc_protocol(send_functions,calltitle))
+    f.write("\n")
+    f.write(gen_send_functions(send_functions,True,None,True))
 
-#f.write("Now the file has more content!")
-f.close()
+    #f.write("Now the file has more content!")
+    f.close()
 
-f = open("builds/{0}/{0}.m".format(calltitle.lower()), "w+")
-f.write(gen_objc_m_header(calltitle.lower()))
-f.write("\n")
-f.write(gen_send_functions(send_functions,True,calltitle))
+    f = open("builds/{0}/{0}.m".format(calltitle.lower()), "w+")
+    f.write(gen_objc_m_header(calltitle.lower()))
+    f.write("\n")
+    f.write(gen_send_functions(send_functions,True,calltitle))
 
-f.close()
+    f.close()
 
+
+kivy_folder = "/Volumes/WorkSSD/kivy-ios-11.04.20_copy/"
+if __name__ == '__main__':
+    t = sys.argv[1]
+    if t == "build":
+        build_py_files()
+    elif t == "compile_all":
+        pack_all("PythonSwiftLink-main.zip",kivy_folder + ".cache/")
+        subprocess.call(['python3.7',"%s/toolchain.py" % kivy_folder, "clean", "PythonSwiftLink"])
+        subprocess.call(['python3.7',"%s/toolchain.py" % kivy_folder, "build", "PythonSwiftLink"])
 
 #(<object> classtest).func0(test.decode('utf-8'),test2)
 #[test[x] for x in range(test_count)]
