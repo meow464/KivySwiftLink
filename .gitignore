@@ -6,6 +6,6 @@ builds/.DS_Store
 builds/.DS_Store
 Exports/Python.zip
 Python.zip
-tmp/
+
 *.pyc
 .DS_Store
