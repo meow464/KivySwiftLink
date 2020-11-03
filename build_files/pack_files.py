@@ -18,12 +18,15 @@ def zipdir(path,src, ziph):
 
 def clear_temp():
     src = "./tmp"
-    for item in os.listdir(src):
-        s = os.path.join(src, item)
-        if os.path.isdir(s):
-            shutil.rmtree(s)
+    if os.path.exists(src):
+        for item in os.listdir(src):
+            s = os.path.join(src, item)
+            if os.path.isdir(s):
+                shutil.rmtree(s)
 
 def create_temp_copy_files(src,dst):
+    if not os.path.exists(dst):
+        os.makedirs("./tmp")
     for item in os.listdir(src):
         s = os.path.join(src, item)
         d = os.path.join(dst, item)
@@ -43,6 +46,7 @@ def pack_all(src,dst):
     #zipf.write("build_files/Setup.py")
     zipf.close()
     shutil.move('Exports/' + src,dst + src)
+    
 
 if __name__ == '__main__':
     pack_all("Python.zip","Exports/cache/")

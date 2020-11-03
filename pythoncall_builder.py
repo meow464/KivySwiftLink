@@ -21,8 +21,16 @@ func_pointer_string = """\
 ctypedef void (*{title})({args})
 """
 
+func_pointer_string2 = """\
+ctypedef {returns} (*{title})({args})
+"""
+
 objc_func_pointer_string = """\
 typedef void (*{title})({args});
+"""
+
+objc_func_pointer_string2 = """\
+typedef {returns} (*{title})({args});
 """
 
 ctypedef_types_dict = {
@@ -31,6 +39,7 @@ ctypedef_types_dict = {
     "uint8_list": "const unsigned char*",
     "float_list": "const float*",
     "double_list": "const double*",
+    "str_list": "const char* const*",
 
     "str": "const char*",
     "int": "int",
@@ -53,7 +62,8 @@ typedef_types_dict = {
     "uint8_list": "const unsigned char* _Nonnull",
     "float_list": "const float* _Nonnull",
     "double_list": "const double* _Nonnull",
-    
+    "str_list": "const char* _Nonnull const* _Nonnull",
+
     "str": "const char* _Nonnull",
     "int": "int",
     "float": "float",
@@ -62,6 +72,10 @@ typedef_types_dict = {
     "PythonCallback": "PythonCallback"
 }
 
+
+
+
+
 def gen_send_start_function(pointers:list):
     typedef_types_dict['PythonCallback'] = calltitle.lower()
     ctypedef_types_dict['PythonCallback'] = calltitle.lower()
@@ -69,7 +83,8 @@ def gen_send_start_function(pointers:list):
         'arg_types' : ['PythonCallback'],
         'args' : ['callback'],
         'name' : 'SendCallback',
-        'real_args' : ((calltitle.lower(),'callback'))
+        'real_args' : ((calltitle.lower(),'callback')),
+        'returns' : None
 
     }
     pointers.append(send)
@@ -91,9 +106,16 @@ def parse_code(string:str):
             calltitle = _body.name
             gen_send_start_function(send_functions)
             for cbody in _body.body:
+                
                 if isinstance(cbody,ast.FunctionDef):
                     temp = {}
                     _dec = None
+
+                    rtns = cbody.returns
+                    if rtns:
+                        temp['returns'] = rtns.id
+                    else:
+                        temp['returns'] = None
                
                     for dec in cbody.decorator_list:
                         _dec = dec.id
@@ -114,7 +136,7 @@ def parse_code(string:str):
                         temp['arg_names'].append(_arg.arg)
                         func_arg_list.append(_arg.annotation.id)
                         temp['arg_types'].append(_arg.annotation.id)
-                        if _arg.annotation.id in ["int_list","long_list","uint8_list","float_list","double_list"]:
+                        if _arg.annotation.id in ["int_list","long_list","uint8_list","float_list","double_list","str_list"]:
                             func_arg_list.append("arg%d_count" % i)
                             temp['args'].append("arg%d_count" % i)
                             temp['arg_names'].append("%s_count" % _arg.arg)
@@ -137,10 +159,11 @@ def parse_code(string:str):
         name = func['name']
 
         _real_arg = list(dict.fromkeys(real_arg))
+        rtns = func['returns']
         func['real_args'] = _real_arg
 
-        if not _real_arg in ptr_types:
-            ptr_types.append(_real_arg)
+        if not (_real_arg,rtns) in ptr_types:
+            ptr_types.append((_real_arg,rtns))
     
         real_arg2 = tuple(zip(func['arg_types'],func['arg_names']))
         _real_arg2 = list(dict.fromkeys(real_arg2))
@@ -169,7 +192,8 @@ def gen_cyfunction_pointers(func_list,ptr_types,objc=True):
     count = 0
     function_pointers = []
     function_pointers2 = []
-    for func in ptr_types:
+    for func,rtns in ptr_types:
+        print(func)
         point_dict = {"p_args":func}
 
         types_list = []
@@ -187,10 +211,17 @@ def gen_cyfunction_pointers(func_list,ptr_types,objc=True):
             str0 = " ".join(_types)
             types_list.append(str0)
         types_str = ", ".join(types_list)
-        if objc:
-            obj_point = objc_func_pointer_string.format(title="cfunc_ptr%d" % count,args=types_str)
+        if rtns:
+            if objc:
+                _rtns = typedef_types_dict[rtns]
+            else:
+                _rtns = ctypedef_types_dict[rtns]
         else:
-            obj_point = func_pointer_string.format(title="cfunc_ptr%d" % count,args=types_str)
+            _rtns = "void"
+        if objc:
+            obj_point = objc_func_pointer_string2.format(title="cfunc_ptr%d" % count, args=types_str, returns=_rtns)
+        else:
+            obj_point = func_pointer_string2.format(title="cfunc_ptr%d" % count, args=types_str, returns=_rtns)
         function_pointers.append(obj_point)
         
 
@@ -263,25 +294,25 @@ def gen_cython_class(title:str,call_var:str,fill_struct:str):
     
     return "\n".join(class_list)
 
-ext_cyfunc = "\tvoid {title}({args})"
+ext_cyfunc = "\t{returns} {title}({args})"
 
 ext_objcfunc_m = """\
-void {title}({args}){{
+{returns} {title}({args}){{
     [{subtitle} {title}:{args2}];
 }}
 """
 ext_objcfunc_h = """\
-void {title}({args});
+{returns} {title}({args});
 """
 
 ext_send_callback = """\
-void Init{title}Delegate({title_l}Delegate _Nonnull callback){{
+{returns} Init{title}Delegate({title_l}Delegate _Nonnull callback){{
     {subtitle} = callback;
     NSLog(@"setting {title} delegate %@",{subtitle});
 }}
 """
 ext_send_callback_h = """\
-void Init{title}Delegate({title_l}Delegate _Nonnull callback);
+{returns} Init{title}Delegate({title_l}Delegate _Nonnull callback);
 """
 
 def gen_send_functions(pointers:list,objc=False,subtitle=None,header=False):
@@ -292,11 +323,19 @@ def gen_send_functions(pointers:list,objc=False,subtitle=None,header=False):
         for item in s1:
             s2.append(item.lower())
         s3 = "_".join(s2)
-        sfunctions.append(ext_send_callback.format(title=calltitle,title_l=calltitle,subtitle=s3))
+        sfunctions.append(ext_send_callback.format(title=calltitle,title_l=calltitle,subtitle=s3,returns="void"))
     if header and objc:
-        sfunctions.append(ext_send_callback_h.format(title=calltitle,title_l=calltitle))
+        sfunctions.append(ext_send_callback_h.format(title=calltitle,title_l=calltitle,returns="void"))
     for i,func in enumerate(pointers):
         types_list = []
+        rtns = func['returns']
+        if rtns:
+            if objc:
+                _rtns = typedef_types_dict[rtns]
+            else:
+                _rtns = ctypedef_types_dict[rtns]
+        else:
+            _rtns = "void"
 
         args2 = []
         for types in func['real_args']:
@@ -328,21 +367,26 @@ def gen_send_functions(pointers:list,objc=False,subtitle=None,header=False):
             types_str = ", ".join(types_list)
             args2_str = ":".join(args2)
             if header:
-                sfunctions.append( ext_objcfunc_h.format(title=func['name'], args=types_str) )
+                sfunctions.append( ext_objcfunc_h.format(title=func['name'], args=types_str, returns=_rtns) )
             else:
-                sfunctions.append( ext_objcfunc_m.format(title=func['name'], args=types_str, args2=args2_str ,subtitle = subt) )
+                sfunctions.append( ext_objcfunc_m.format(title=func['name'], args=types_str, args2=args2_str ,subtitle = subt, returns=_rtns) )
         else:
             types_str = ", ".join(types_list)
             if header:
-                sfunctions.append( ext_cyfunc.format(title=func['name'], args=types_str ) )
+                sfunctions.append( ext_cyfunc.format(title=func['name'], args=types_str ,returns=_rtns) )
             else:
-                sfunctions.append( ext_cyfunc.format(title=func['name'], args=types_str ) )
+                sfunctions.append( ext_cyfunc.format(title=func['name'], args=types_str ,returns=_rtns) )
 
     return "\n".join( sfunctions )
 
 
 cython_callback = """\
 cdef void cy_{title}({args}) with gil:
+\t(<object> {_class}).{title}{callback}
+
+"""
+cython_callback2 = """\
+cdef {returns} cy_{title}({args}) with gil:
 \t(<object> {_class}).{title}{callback}
 
 """
@@ -367,7 +411,12 @@ def gen_cython_callbacks(pointers:list):
             types_list.append(str0)
         args_str = ", ".join(types_list)
         callback = func['callback']#.split(".")[-1]
-        s = cython_callback.format(title=_title,callback=callback,args = args_str,_class="classtest")
+        rtns = func['returns']
+        if rtns:
+            _rtns = ctypedef_types_dict[rtns]
+        else:
+            _rtns = "void"
+        s = cython_callback2.format(title=_title,callback=callback,args = args_str,_class="classtest",returns=_rtns)
         cy_functions.append(s)
     
     return "".join(cy_functions)
@@ -396,7 +445,7 @@ def gen_structtype_init_funct(title:str, objc=False):
 
 
 protocol_start = "@protocol {title}Delegate <NSObject>"
-protocol_line_start = "- (void){title}:{args};"
+protocol_line_start = "- ({returns}){title}:{args};"
 protocol_arg = "{arg}:({type}){arg}"
 protocol_first_arg = "({type}){arg}"
 protocol_id = "typedef id<{title}Delegate> {title}Delegate;"
@@ -420,7 +469,12 @@ def gen_objc_protocol(pointers:list,title):
 
         arg_string = " ".join(types_list)  
         name = func['name']
-        line = protocol_line_start.format(title=name,args=arg_string)
+        rtns = func['returns']
+        if rtns:
+            _rtns = typedef_types_dict[rtns]
+        else:
+            _rtns = "void"
+        line = protocol_line_start.format(title=name,args=arg_string, returns= _rtns)
         sfunctions.append(line)
     
     sfunctions.append("@end\n")
@@ -524,6 +578,6 @@ if __name__ == '__main__':
         pack_all("PythonSwiftLink-main.zip",kivy_folder + ".cache/")
         subprocess.call(['python3.7',"%s/toolchain.py" % kivy_folder, "clean", "PythonSwiftLink"])
         subprocess.call(['python3.7',"%s/toolchain.py" % kivy_folder, "build", "PythonSwiftLink"])
-
+         
 #(<object> classtest).func0(test.decode('utf-8'),test2)
 #[test[x] for x in range(test_count)]

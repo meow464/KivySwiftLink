@@ -80,3 +80,6 @@ class OSCLiveCallback:
     def track_list(conchar:str):
         "update_tracks(json.loads(conchar))"
 
+    
+    def send_whatever(name_list:str_list):
+        "pass"
