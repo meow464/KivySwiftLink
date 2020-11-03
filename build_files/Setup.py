@@ -100,19 +100,19 @@ for key,_file in file_list:
                 #'extra_compile_args': ['-ObjC++'],
                 'extra_compile_args': ['-ObjC'],
                 'depends': [
-                            '%s/%s.m' % (_filename,_filename)
+                            '%s.m' % _filename
                             ] + _deps}
-            sources['%s/%s_cy.pyx' % (_filename,_filename)] = merge(base_flags, osx_flags)
-            sources['%s/%s_cy.pyx' % (_filename,_filename)]['module_name'] = _classname
+            sources['%s.pyx' % _filename] = merge(base_flags, osx_flags)
+            sources['%s.pyx' % _filename]['module_name'] = _classname
         else:
             osx_flags = {
                 'extra_link_args': [],
                 #'extra_compile_args': ['-ObjC++'],
                 'extra_compile_args': ['-ObjC'],
                 'depends': _deps}
-            print('%s/%s.pyx' % (_filename,_filename))
-            sources['%s/%s.pyx' % (_filename,_filename)] = merge(base_flags, osx_flags)
-            sources['%s/%s.pyx' % (_filename,_filename)]['module_name'] = _classname
+            print('%s.pyx' % (_filename))
+            sources['%s.pyx' % _filename] = merge(base_flags, osx_flags)
+            sources['%s.pyx' % _filename]['module_name'] = _classname
 print(sources)
 # osx_flags = {
 #     'extra_link_args': [],

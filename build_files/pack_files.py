@@ -27,11 +27,17 @@ def clear_temp():
 def create_temp_copy_files(src,dst):
     if not os.path.exists(dst):
         os.makedirs("./tmp")
-    for item in os.listdir(src):
-        s = os.path.join(src, item)
-        d = os.path.join(dst, item)
-        if os.path.isdir(s):
-            shutil.copytree(s, d, False, None)
+    for root, dirs, files in os.walk(src):
+        for file in files:
+            if file != ".DS_Store":
+                s = os.path.join(root, file)
+                d = os.path.join(dst, file)
+                shutil.copy(s,d)
+    # for item in os.listdir(src):
+    #     s = os.path.join(src, item)
+    #     d = os.path.join(dst, item)
+    #     if os.path.isdir(s):
+    #         shutil.copytree(s, d, False, None)
     shutil.copy("./build_files/Setup.py","./tmp/Setup.py")
     shutil.copy("./builds/compile_modules.ini","./tmp/compile_modules.txt")
     shutil.copy("./build_files/files_list.py","./tmp/files_list.py")

@@ -306,13 +306,13 @@ ext_objcfunc_h = """\
 """
 
 ext_send_callback = """\
-{returns} Init{title}Delegate({title_l}Delegate _Nonnull callback){{
+{returns} Init{title}Delegate(<{title_l}Delegate> _Nonnull callback){{
     {subtitle} = callback;
     NSLog(@"setting {title} delegate %@",{subtitle});
 }}
 """
 ext_send_callback_h = """\
-{returns} Init{title}Delegate({title_l}Delegate _Nonnull callback);
+{returns} Init{title}Delegate(<{title_l}Delegate> _Nonnull callback);
 """
 
 def gen_send_functions(pointers:list,objc=False,subtitle=None,header=False):
@@ -449,7 +449,7 @@ protocol_line_start = "- ({returns}){title}:{args};"
 protocol_arg = "{arg}:({type}){arg}"
 protocol_first_arg = "({type}){arg}"
 protocol_id = "typedef id<{title}Delegate> {title}Delegate;"
-protocol_static = "\nstatic {title}Delegate _Nonnull {subtitle};"
+protocol_static = "\nstatic <{title}Delegate> _Nonnull {subtitle};"
 
 def gen_objc_protocol(pointers:list,title):
     sfunctions = []
@@ -483,8 +483,8 @@ def gen_objc_protocol(pointers:list,title):
     for item in s1:
         s2.append(item.lower())
     s3 = "_".join(s2)
-    pro_id = protocol_id.format(title=title)
-    sfunctions.append(pro_id)
+    # pro_id = protocol_id.format(title=title)
+    # sfunctions.append(pro_id)
     static = protocol_static.format(title=title,subtitle=s3)
     sfunctions.append(static)
     return "\n".join(sfunctions)
