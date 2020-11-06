@@ -9,3 +9,4 @@ Python.zip
 tmp/
 *.pyc
 .DS_Store
+builds/.DS_Store

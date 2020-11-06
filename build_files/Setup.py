@@ -84,58 +84,32 @@ base_flags = determine_base_flags()
 modules_path = dirname(os.path.abspath(__file__))
 cfg = open_config(modules_path)
 file_list = cfg.items()
-print(list(file_list))
 for key,_file in file_list: 
     if key != "DEFAULT":
-        print(_file['depends'],type(_file['depends']))
-        _deps = json.loads(_file['depends'])
-        print(_deps,type(_deps))
+        print("_deps",_file['depends'])
+        _deps = _file['depends']
+
         _t = _file['type']
         _classname = _file['classname']
         _filename = _file['dirname']
-        print("type:",_t)
-        if _t != 'custom':
+
+        if _t != "custom":
             osx_flags = {
                 'extra_link_args': [],
-                #'extra_compile_args': ['-ObjC++'],
                 'extra_compile_args': ['-ObjC'],
-                'depends': [
-                            '%s.m' % _filename
-                            ] + _deps}
-            sources['%s.pyx' % _filename] = merge(base_flags, osx_flags)
-            sources['%s.pyx' % _filename]['module_name'] = _classname
+                'depends': ['%s.m' % _filename]}
+            sources['%s_cy.pyx' % _filename] = merge(base_flags, osx_flags)
+            sources['%s_cy.pyx' % _filename]['module_name'] = '%s_cy' % _filename
         else:
             osx_flags = {
                 'extra_link_args': [],
-                #'extra_compile_args': ['-ObjC++'],
                 'extra_compile_args': ['-ObjC'],
                 'depends': _deps}
             print('%s.pyx' % (_filename))
             sources['%s.pyx' % _filename] = merge(base_flags, osx_flags)
             sources['%s.pyx' % _filename]['module_name'] = _classname
-print(sources)
-# osx_flags = {
-#     'extra_link_args': [],
-#     #'extra_compile_args': ['-ObjC++'],
-#     'extra_compile_args': ['-ObjC'],
-#     'depends': [
-#                 'LiveOsc.m','LiveOscExt.pxd'
-#                 ]}
-# sources['LiveOscLib.pyx'] = merge(base_flags, osx_flags)
-# sources['LiveOscLib.pyx']['module_name'] = "LiveOscLib"
-
-# osx_flags = {
-#     'extra_link_args': [],
-#     #'extra_compile_args': ['-ObjC++'],
-#     'extra_compile_args': ['-ObjC'],
-#     'depends': [
-#                 'pythoncalltest.m'
-#                 ]}
-# sources['pythoncalltest_cy.pyx'] = merge(base_flags, osx_flags)
-# sources['pythoncalltest_cy.pyx']['module_name'] = "pythoncalltesta"
 
 ext_modules.extend(get_extensions_from_sources(sources))
- #= get_extensions_from_sources(sources,"LiveOsc")
 
 setup(
       name='PythonSwiftLink',

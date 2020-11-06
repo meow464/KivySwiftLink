@@ -1,19 +1,26 @@
 import configparser
 import os
+import json
 
 
 
-config = configparser.ConfigParser()
+#config = configparser.ConfigParser()
 
-def open_config(path:str)->config:
-    print(os.path.join(path,"compile_modules.txt"))
+def open_config(path:str)->dict:
+    print(os.path.join(path,"compile_modules.ini"))
+
     try:
-        with open(os.path.join(path,"compile_modules.txt"), 'r') as configfile:
-            config.read_file(configfile)
+        with open(os.path.join(path,"compile_modules.ini"), 'r') as configfile:
+            _str = configfile.read()
+            # print(_str)
+            # _list = json.loads(_str)
+            # _key,_dict = _list
+            # modules[_key] = _dict
             configfile.close()
-        return config
+        return json.loads(_str)
     except:
-        return config
+        print("import error")
+        return {}
 
 
 
