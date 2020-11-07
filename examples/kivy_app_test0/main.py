@@ -20,7 +20,7 @@ class TestApp(App):
         wid.text = "Im Pressed"
 
     def send_2_swift(self,wid):
-        wid.text = self.osclive.update_btn()
+        wid.text = self.osclive.update_btn("From Python")
 
     def update_btn(self,string):
         self.btn.text = string

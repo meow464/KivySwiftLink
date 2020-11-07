@@ -3,7 +3,7 @@
 class OSCLiveCallback2:
 
     @callback
-    def func0(test: int_list,test2: int):
+    def func0(test: list(int),test2: int):
         """([test[x] for x in range(test_count)],test2)"""
 
     # @callback
@@ -14,19 +14,23 @@ class OSCLiveCallback2:
         pass
 
     # @callback
-    def func1(test: long_list,test2: int):
+    def func1(test: list(long),test2: int):
         "([test[x] for x in range(test_count)],test2)"
 
     @callback
-    def func2(test: uint8_list,test2: float):
+    def func2(test: list(uint8),test2: float):
+        "(list(test[0:test_count]),test2)"
+        
+    @callback
+    def func2b(test: list(uint8),test2: float):
         "(list(test[0:test_count]),test2)"
 
     
-    def func3(test: float_list, test2: double_list, test3:int_list,test4:str_list ):
+    def func3(test: list(float), test2: list(double), test3:list(int),test4:list(str) ):
         "([test[x] for x in range(test_count)],test2)"
 
     
-    def func4(test: double_list,test2: float):
+    def func4(test: list(double),test2: float):
         "([test[x] for x in range(test_count)],test2)"
 
     # @callback
@@ -81,5 +85,5 @@ class OSCLiveCallback2:
     #     "update_tracks(json.loads(conchar))"
 
     
-    def update_btn() -> str:
+    def update_btn(test0:str) -> str:
         "pass"
