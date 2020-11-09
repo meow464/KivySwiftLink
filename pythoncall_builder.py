@@ -47,6 +47,8 @@ ctypedef_types_dict = {
     "int": "int",
     "float": "float",
     "long": "long",
+    "object": "void*",
+    "json": "const char*",
 
     "PythonCallback": "PythonCallback"
 }
@@ -58,6 +60,7 @@ ctypedef_list_dict = {
     "float": "const float*",
     "double": "const double*",
     "str": "const char* const*",
+    
 }
 
 typedef_types_dict = {
@@ -72,6 +75,9 @@ typedef_types_dict = {
     "int": "int",
     "float": "float",
     "long": "long",
+    "object": "void* _Nonnull",
+    "json": "const char* _Nonnull",
+
 
     "PythonCallback": "PythonCallback"
 }
@@ -97,6 +103,8 @@ python_types_dict = {
     "int": "int",
     "float": "float",
     "long": "int",
+    "object": "object",
+    "json" : "object",
 
     "PythonCallback": "PythonCallback"
 }
@@ -115,6 +123,8 @@ call_args_dict = {
     "int": "{arg}",
     "float": "{arg}",
     "long": "{arg}",
+    "object": "<object>{arg}",
+    "json": "json.loads({arg})",
 
     "PythonCallback": "PythonCallback"
 }
@@ -173,7 +183,7 @@ class_cyfunc_send_plain = """\
 \t\t{call}
 """
 
-call_args_dict = {
+call_args_dict2 = {
     "list(int)": "[{arg} for x in range({arg}_count)]",
     "list(long)": "[{arg} for x in range({arg}_count)]",
     "list(uint8)": "[{arg} for x in range({arg}_count)]",
@@ -287,7 +297,14 @@ cdef void cy_{title}({args}) with gil:
 """
 cython_callback2 = """\
 cdef {returns} cy_{title}({args}) with gil:
-\t(<object> {_class}).{title}{callback}
+\t(<object> {_class}).{call}{callback}
+
+"""
+
+cython_callback3 = """\
+cdef {returns} cy_{title}({args}) with gil:
+\t{code}
+\t(<object> {_class}).{call}{callback}
 
 """
 
@@ -325,6 +342,7 @@ class Arg():
     return_name: str
     is_list: bool
     is_counter: bool
+    is_json: bool
     counter_name: str
     list_type: str
 
@@ -339,6 +357,7 @@ class Arg():
         self.return_name = ""
         self.is_list = False
         self.is_counter = False
+        self.is_json = False
         self.counter_name = ""
         self.list_type = ""
 
@@ -349,6 +368,7 @@ class Function():
     args2: list
     arg_types: list
     arg_names: list
+    extra_args: list
     real_args: list
     real_args2: list
     python_args: list
@@ -359,6 +379,9 @@ class Function():
     callback: str
     func_ptr: str
     decs: list
+    code: str
+    call_class: str
+    call_target: str
 
 
 
@@ -378,6 +401,9 @@ class Function():
         self.name = ""
         self.callback = ""
         self.func_ptr = ""
+        self.code = ""
+        self.call_class = "classtest"
+        self.call_target = ""
 
 class PythonCallBuilder():
 
@@ -425,12 +451,18 @@ class PythonCallBuilder():
                 global calltitle
                 calltitle = _body.name
                 self.gen_send_start_function(send_functions)
+                #cbody: ast.FunctionDef().type_comment
                 for cbody in _body.body:
                     
                     if isinstance(cbody,ast.FunctionDef):
+                        #print(ast.get_docstring(cbody))
+
                         temp = Function()
+                        temp.code = ast.get_docstring(cbody)
                         new_func_ptrs.append(temp)
                         _dec = None
+                        _call_class = ""
+
 
                         rtns = cbody.returns
                         if rtns:
@@ -439,22 +471,39 @@ class PythonCallBuilder():
                             temp.returns = None
                 
                         for dec in cbody.decorator_list:
-                            _dec = dec.id
-                        if _dec:
-                            temp.decs.append(_dec)
-                            if _dec == 'callback':
-                                func_pointers.append(temp)
-                        else:
+                            print(dec.__dict__)
+                            if isinstance(dec,ast.Call):
+                                _dec = dec.func.id
+                            else:
+                                _dec = dec.id
+                            if _dec:
+                                print(_dec)
+                                temp.decs.append(_dec)
+                                if _dec == 'callback':
+                                    func_pointers.append(temp)
+                                elif _dec == 'call_args':
+                                    for arg in dec.args:
+                                        print(arg.id)
+                                        temp.call_args.append(arg.id)
+                                elif _dec == "call_class":
+                                    print("call_class:",dec.args[0].id)
+                                    temp.call_class = dec.args[0].id
+                                    _call_class = dec.args[0].id
+                                elif _dec == "call_target":
+                                    print("call_target:",dec.args[0].id)
+                                    temp.call_target = dec.args[0].id
+                                    
+                                
+                            
+                        if not _dec:
                             send_functions.append(temp)
                         temp.name = cbody.name
 
                         func_arg_list = []
-                        # temp.args = []
-                        # temp.arg_types = []
-                        # temp['arg_names'] = []
-                        for i,_arg in enumerate(cbody.args.args):
-       
 
+                        for i,_arg in enumerate(cbody.args.args):
+                
+                            
                             func_arg = Arg()
                             temp.args_.append(func_arg)
                             func_arg.objc_name = "arg%d" % i
@@ -463,12 +512,6 @@ class PythonCallBuilder():
                             func_arg.python_name = _arg.arg
                             func_arg.cy_name = _arg.arg
 
-
-                            # func_arg_list.append("arg%d" % i)
-
-                            # temp.args.append("arg%d" % i)
-                            # temp.arg_names.append(_arg.arg)
-                            # temp.call_args.append(_arg.arg)
                             if not isinstance(_arg.annotation,ast.Call):
                                 arg_type = _arg.annotation.id
                                 func_arg.is_list = False
@@ -477,11 +520,11 @@ class PythonCallBuilder():
 
                                 func_arg.objc_type = typedef_types_dict[arg_type]
 
-
-
                                 func_arg_list.append(_arg.annotation.id)
                                 temp.arg_types.append(_arg.annotation.id)
                                 temp.python_args.append(python_types_dict[_arg.annotation.id])
+                                if arg_type == "json":
+                                    func_arg.is_json = True
                             else:
                                 #### Call (list type)####
                                 arg_type = _arg.annotation.args[0].id
@@ -500,7 +543,7 @@ class PythonCallBuilder():
                                 list_counter.cy_name = "%s_size" % _arg.arg
                                 list_counter.objc_type = "long"
                                 list_counter.objc_name = "arg%d_size" % i
-                     
+                    
                                 if _dec == 'callback':
                                     
                                     func_arg_list.append("arg%d_size" % i)
@@ -534,24 +577,11 @@ class PythonCallBuilder():
                         ptr_compare.append((compare,rtns))
                         zip_arg = tuple(zip(compare,func.args))
                         ptr_types2.append(func)
-
-
-
-        ptr_types = []
-        for func in func_pointers:
-            real_arg = tuple(zip(func.arg_types,func.args))
-            name = func.name
-
-            _real_arg = list(dict.fromkeys(real_arg))
-            rtns = func.returns
-            func.real_args = _real_arg
-
-            if (_real_arg,rtns) not in ptr_types:
-                ptr_types.append((_real_arg,rtns))
-        
-            real_arg2 = tuple(zip(func.arg_types,func.arg_names))
-            _real_arg2 = list(dict.fromkeys(real_arg2))
-            func.real_args2 = _real_arg2
+                else:
+                    if ([],rtns) not in ptr_compare:
+                        ptr_compare.append(([],rtns))
+                        zip_arg = tuple(zip(compare,func.args))
+                        ptr_types2.append(func)
 
             
         for func in send_functions:
@@ -768,19 +798,6 @@ class PythonCallBuilder():
             for _args in func.args_:
                 _types = []
                 args2.append(_args.objc_type)
-                # for i,_type in enumerate(types):
-
-                #     if i%2:
-                #         _types.append(_type)
-                #         args2.append(_type)
-                #         types_list2.append(_type)
-                #     else:
-                #         if objc:
-                #             _types.append(typedef_types_dict[_type])
-                #             types_list2.append(typedef_types_dict[_type])
-                            
-                #         else:
-                #             _types.append(ctypedef_types_dict[_type])
                         
                 str0 = " ".join((_args.objc_type,_args.objc_name))
                 types_list.append(str0)
@@ -830,16 +847,7 @@ class PythonCallBuilder():
                     sfunctions.append( ext_cyfunc.format(title=func.name, args=types_str ,returns=_rtns) )
                 else:
                     sfunctions.append( self.gen_cyfunc_sends(func,types_list,", ".join(args2),func.returns,len(func.args_) != 0) )
-                    # if rtns is not None:
-                    #     if len(types_list2) != 0:
-                    #         sfunctions.append(class_cyfunc_send_rtn.format(title=func.name, args=types_str,args2=args2_str ) )
-                    #     else:
-                    #         sfunctions.append(class_cyfunc_send_rtn_noargs.format(title=func.name, args=types_str ) )
-                    # else:
-                    #     if len(types_list2) != 0:
-                    #         sfunctions.append( class_cyfunc_send.format(title=func.name, args=types_str ) )
-                    #     else:
-                    #         sfunctions.append( class_cyfunc_send.format(title=func.name, args=types_str ) )
+
             
         if not header and not objc:
             del sfunctions[0]
@@ -854,9 +862,10 @@ class PythonCallBuilder():
             args2 = []
             arg:Arg
             for arg in func.args_:
+                
                 _types = []
                 _types.append(arg.cy_type)
-                _types.append(arg.cy_name)
+                _types.append(arg.objc_name)
                 args2.append(arg.cy_name)
             # for types in func.real_args2:
             #     _types = []
@@ -872,12 +881,18 @@ class PythonCallBuilder():
             args_str = ", ".join(types_list)
             call_args = []
             call_arg: Arg
+            _call_class = func.call_class
             for call_arg in func.args_:
-                if call_arg.is_list:
-                    call_args.append(call_list_dict[call_arg.list_type].format(arg=call_arg.cy_name))
-                else:
-                    if not call_arg.is_counter:
-                        call_args.append(call_arg.cy_name)
+                if _call_class != call_arg.python_name:
+                    if call_arg.is_list:
+                        call_args.append(call_list_dict[call_arg.list_type].format(arg=call_arg.objc_name))
+                    else:
+                        if not call_arg.is_counter:
+                            if call_arg.is_json:
+                                arg_name = call_args_dict["json"].format(arg=call_arg.objc_name)
+                            else:
+                                arg_name = call_args_dict[call_arg.python_type].format(arg=call_arg.objc_name)
+                            call_args.append(arg_name)
 
             callback = "(%s)" % ", ".join(call_args)#.split(".")[-1]
             rtns = func.returns
@@ -885,7 +900,18 @@ class PythonCallBuilder():
                 _rtns = ctypedef_types_dict[rtns]
             else:
                 _rtns = "void"
-            s = cython_callback2.format(title=_title,callback=callback,args = args_str,_class="classtest",returns=_rtns)
+            if len(func.call_args) != 0:
+                callback = "(%s)" % ", ".join(func.call_args)
+            if func.call_target != "":
+                call = ".".join((func.call_target,_title))
+            else:
+                call = _title
+            if func.code:
+                code = func.code.replace("\n","\n\t") #+ callback
+                
+                s = cython_callback3.format(title=_title,call=call,callback=callback,args = args_str,_class=func.call_class,returns=_rtns,code=code)
+            else:
+                s = cython_callback2.format(title=_title,call=call,callback=callback,args = args_str,_class=func.call_class,returns=_rtns)
             cy_functions.append(s)
         
         return "".join(cy_functions)
