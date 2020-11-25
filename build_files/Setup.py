@@ -97,7 +97,7 @@ for key,_file in file_list:
             osx_flags = {
                 'extra_link_args': [],
                 'extra_compile_args': ['-ObjC','-w'],
-                'depends': ['%s.m' % _filename]}
+                'depends': ['%s.m' % _filename,'%s.h' % _filename]}
             sources['%s_cy.pyx' % _filename] = merge(base_flags, osx_flags)
             sources['%s_cy.pyx' % _filename]['module_name'] = '%s_cy' % _filename
         else:
@@ -112,7 +112,7 @@ for key,_file in file_list:
 ext_modules.extend(get_extensions_from_sources(sources))
 
 setup(
-      name='PythonSwiftLink',
+      name='RealmDatabase',
       version='0.1',
       description="A Cython wrapper for Objc/Swift",
       classifiers=[
