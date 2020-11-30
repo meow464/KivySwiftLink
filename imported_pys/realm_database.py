@@ -37,12 +37,14 @@ class RealmDatabase:
     # def receiveBrowseritem(item:BrowserItemTemp):
     #     pass
 
-    
+    def setInterfaceCallback(realmID:str,obj:object):
+        pass
+
     def loadBrowserItem(item:long):
         pass
 
     @callback
-    def getItemNames(names:json):
+    def getItemNames(names:json,target:object):
         pass
 
     def searchBrowser(search_string:str):
@@ -59,11 +61,11 @@ class RealmDatabase:
 
 
     @callback
-    def receiveInterfacePreset(item:json):
+    def receiveInterfacePreset(item:json,target:object):
         pass
 
     @callback    
-    def receiveInterfacePreList(prelist:json):
+    def receiveInterfacePreList(prelist:json,target:object):
         pass
 
     def searchInterfacePresets(realmID:str,key:str):
@@ -80,12 +82,4 @@ class RealmDatabase:
 
     def loadInterfaceFile(db_name:str) -> long:
         pass
-    ##### clipslots #####
 
-    #@callback
-    #@call_target(clipslots)
-    #@call_args(arg0, arg1 , Red, Green, Blue)
-    # def slot_color(arg0: int,arg1: int,arg2: int):    
-    #     """
-    #     cdef dict _dict = arg0[]
-    #     """

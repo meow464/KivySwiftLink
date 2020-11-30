@@ -29,6 +29,8 @@ from pygments.lexers.objective import ObjectiveCLexer
 from pygments.lexers import CythonLexer
 
 from filecmp import cmp,cmpfiles
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
 
 Window.size = (1920, 1080)
 Window.left = 0
@@ -160,10 +162,35 @@ class CodeViews(BoxLayout):
     
     def __init__(self, **kwargs):
         super(CodeViews,self).__init__(**kwargs)
-        
+
+
+    
 kivy_folder = "/Volumes/WorkSSD/kivy-ios-11.04.20_copy/"
 toolchain = join(kivy_folder,"toolchain.py")
 root_path = os.path.dirname(sys.argv[0])
+
+class EventHandler(FileSystemEventHandler):
+    app = None
+    def __init__(self,app, **kwargs):
+        super(EventHandler,self).__init__(**kwargs)
+        self.app = app
+
+    def on_any_event(self, event):
+        app:KivySwiftLink = self.app
+        #event.is
+        file_str = event.src_path
+        filetype = file_str.split('.')
+        if filetype[-1] == 'py':
+            #src = path + event.src_path
+            
+            print (event.src_path)
+            app.build_wdog_event(event.src_path)
+
+
+
+
+
+
 
 class KivySwiftLink(App):
     main: MainWindow
@@ -172,6 +199,9 @@ class KivySwiftLink(App):
     selected_py: ToggleButton
     calltitle: str = ""
     mode = -1
+    def __init__(self, **kwargs):
+        super(KivySwiftLink,self).__init__(**kwargs)
+        self.wdog_thread()
     
     def build_selected(self,py_sel):
         p_build = PythonCallBuilder()
@@ -192,7 +222,22 @@ class KivySwiftLink(App):
         
         pack_all("master.zip",calltitle)
 
-    
+    def build_wdog_event(self,filename):
+        p_build = PythonCallBuilder()
+        
+        p_build.build_py_files(filename)
+        calltitle = p_build.get_calltitle()
+
+        pack_all("master.zip",calltitle)
+        thread = Thread(target=self.compiler,args=[calltitle])
+        thread.start()
+
+    def wdog_thread(self):
+        event_handler = EventHandler(self)
+        observer = Observer()
+        observer.schedule(event_handler, join(root_path,"imported_pys"), recursive=True,)
+        observer.start()
+
     def compile_selected(self,btn):
         self.build_log.text = "Compiling:\n"
         #self.build_log.text.__add__("Compiling:\n")
@@ -228,7 +273,6 @@ class KivySwiftLink(App):
                         with open(join(root_path,"builds",item,"module.ini")) as f:
                             key,module = json.loads(f.read())
                             t = ToggleButton(
-                                text= module["dirname"],
                                 group=self.group,
                                 size_hint_y=None,
                                 height=48
@@ -236,8 +280,10 @@ class KivySwiftLink(App):
                             t.type = "builds"
                             if module['type'] != "custom":
                                 t.title = module['title']
+                                t.text= module["title"]
                             else:
                                 t.title = module['classname']
+                                t.text= module["classname"]
                             t.bind(on_press=self.btn_action)
                             builds.add_widget(t)
             except Exception as E:
@@ -270,19 +316,30 @@ class KivySwiftLink(App):
             self.mode = 1
 
     def compiler(self,calltitle):
-        build_file = join(root_path,"builds",calltitle,"module_name.json")
-        target_path = join(kivy_folder,"recipes","kivytest")
-        shutil.copy(build_file,target_path)
+        #build_file = join(root_path,"builds",calltitle,"module_name.json")
+        build_file = join(root_path,"builds",calltitle,"kivy_recipe.py")
+
+        target_path = join(kivy_folder,"recipes",calltitle)
+        if not os.path.exists( target_path ):
+            os.makedirs(target_path)
+        recipe_path = join(target_path,"__init__.py")
+        if os.path.exists( recipe_path ):
+            print("__init__.py Exists")
+            if not cmp(build_file,recipe_path):
+                print("Updating __init__.py")
+                shutil.copy(build_file,recipe_path)
+        else:
+            shutil.copy(build_file,recipe_path)
         try:
             remove_cache_file( join(kivy_folder,".cache",calltitle+"-master.zip") )
         except:
             pass
         print(calltitle)
-        command = " ".join(['python3.7',toolchain, "clean", "kivytest"])  # the shell command
+        command = " ".join(['python3.7',toolchain, "clean", calltitle])  # the shell command
         self.execute(command)
-        command = " ".join(['python3.7',toolchain, "build", "kivytest"])  # the shell command
+        command = " ".join(['python3.7',toolchain, "build", calltitle])  # the shell command
         self.execute(command)
-        command = " ".join(['python3.7',toolchain, "clean", "kivytest"])  # the shell command
+        command = " ".join(['python3.7',toolchain, "clean", calltitle])  # the shell command
         self.execute(command)
         try:
             remove_cache_file(kivy_folder+".cache/"+calltitle+"-master.zip")
@@ -320,6 +377,10 @@ class KivySwiftLink(App):
         else:
             if btn.idx == 0:
                 self.build_selected(self.selected_py)
+
+
+
+
 
     def build(self):
         self.main = MainWindow()

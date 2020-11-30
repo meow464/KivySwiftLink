@@ -1,25 +1,19 @@
 from toolchain import CythonRecipe, shprint
 from os.path import join
 from distutils.dir_util import copy_tree
-#from .module_name import *
-from os.path import join,dirname,exists
+from .module_name import *
 import fnmatch
 import sh
 import os
 import urllib.parse
-import json
 
-module_name = #MODULE_NAME
-pythonlinkroot = #PYTHONLINKROOT
-module_folder = #MODULE_FOLDER
-class #RECIPENAME_Recipe(CythonRecipe):
+class KivySwiftLinkRecipe(CythonRecipe):
     version = "master"
-    url = 'file://' + urllib.parse.quote(join(pythonlinkroot,"Exports",module_name,"master.zip"))
-    library = "Temp.a"
+    url = 'file://' + urllib.parse.quote(join(pythonlinkroot + "Exports" + module_name +"-master.zip"))
+    library = "temp.a"
     depends = ["python3", "hostpython3"]
     pre_build_ext = True
     archs = ['x86_64','arm64','arm64e','armv7','armv7s']
-    #name = module_name
 
     def install(self):
         pass
@@ -34,7 +28,6 @@ class #RECIPENAME_Recipe(CythonRecipe):
             build_path.append(module_name)
 
         dist_dir  = join(self.ctx.dist_dir, *build_path)
-        print("dist_dir")
         copy_tree(build_dir, dist_dir)
 
     def biglink(self):
@@ -47,4 +40,4 @@ class #RECIPENAME_Recipe(CythonRecipe):
         cmd = sh.Command(join(self.ctx.root_dir, "tools", "biglink"))
         shprint(cmd, join(self.build_dir, "temp.a"), *dirs)
 
-recipe = #RECIPENAME_Recipe()
+recipe = KivySwiftLinkRecipe()

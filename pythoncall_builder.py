@@ -13,6 +13,9 @@ import json
 from os.path import join
 import shutil
 
+
+
+
 print(os.path.basename(sys.argv[0]))
 print(os.path.dirname(sys.argv[0]))
 root_path = os.path.dirname(sys.argv[0])
@@ -50,7 +53,7 @@ ctypedef_types_dict = {
     "int": "int",
     "float": "float",
     "long": "long",
-    "object": "void*",
+    "object": "const void*",
     "json": "const char*",
     "bytes": "const char*",
 
@@ -81,7 +84,7 @@ typedef_types_dict = {
     "int": "int",
     "float": "float",
     "long": "long",
-    "object": "void* _Nonnull",
+    "object": "const void* _Nonnull",
     "json": "const char* _Nonnull",
     "bytes": "const char*  _Nonnull",
 
@@ -131,8 +134,8 @@ send_args_dict = {
     "int": "{arg}",
     "float": "{arg}",
     "long": "{arg}",
-    "object": "<void*>{arg}",
-    "json": "json.dumps({arg})",
+    "object": "<const void*>{arg}",
+    "json": "json.dumps({arg}).encode('utf-8')",
     "bytes": "{arg}",
 
     "PythonCallback": "{arg}",
@@ -188,7 +191,7 @@ cdef public void* {_class}_voidptr
 cdef class {_class}:
 \tdef __init__(self,object _{call_var}):
 \t\tglobal {call_var} 
-\t\t{call_var} = <void*>_{call_var}
+\t\t{call_var} = <const void*>_{call_var}
 \t\tprint("{call_var} init:", (<object>{call_var}))
 """
 
@@ -1092,15 +1095,15 @@ class PythonCallBuilder():
         
         _mfile = {
             
-            "module_name" : "RealmDatabase",
+            "#MODULE_NAME" : calltitle,
 
-            "root_name" : "",
+            #"root_name" : "",
 
-            "module_folder" : None,
+            "#MODULE_FOLDER" : None,
 
-            "module_name_as_root" : True ,
+            #"module_name_as_root" : True ,
 
-            "pythonlinkroot" : os.path.dirname(__file__)
+            "#PYTHONLINKROOT" : os.path.dirname(__file__)
 
 
         }
@@ -1118,10 +1121,23 @@ class PythonCallBuilder():
         
 
         #json.dump(_mfile,join(root_path,"builds",class_name,"module_name.json"))
-        kivy_recipe_path = "/Volumes/WorkSSD/kivy-ios-11.04.20_copy/recipes/kivytest"
-        with open(join(root_path,"builds",class_name,"module_name.json"), 'w') as module_file:
-            json.dump(_mfile,module_file)
-        shutil.copy(join(root_path,"builds",class_name,"module_name.json"),join(kivy_recipe_path))
+        #kivy_recipe_path = join("/Volumes/WorkSSD/kivy-ios-11.04.20_copy/recipes",calltitle)
+        builds = join(root_path,"builds",class_name)
+        with open(join(builds,"kivy_recipe.py"),'w') as recipe:
+            new_recipe = kivy_recipe
+
+            new_recipe = new_recipe.replace("#MODULE_NAME","\"%s\"" % _mfile["#MODULE_NAME"])
+            if _mfile["#MODULE_FOLDER"] != None:
+                new_recipe = new_recipe.replace("#MODULE_FOLDER","\"%s\"" % _mfile["#MODULE_FOLDER"])
+            else:
+                new_recipe = new_recipe.replace("#MODULE_FOLDER","None")
+            new_recipe = new_recipe.replace("#PYTHONLINKROOT","\"%s\"" % _mfile["#PYTHONLINKROOT"])
+            #RECIPENAME_
+            new_recipe = new_recipe.replace("#RECIPENAME_",calltitle)
+            recipe.write(new_recipe)
+        # with open(join(root_path,"builds",class_name,"module_name.json"), 'w') as module_file:
+        #     json.dump(_mfile,module_file)
+        # shutil.copy(join(root_path,"builds",class_name,"module_name.json"),join(kivy_recipe_path))
         #     for key,value in _tmp.items():
         #         module_file.write("{0} = \"{1}\"\n".format(key,value))
         # except:
@@ -1132,6 +1148,9 @@ class PythonCallBuilder():
     ##############################################################
 
     def build_py_files(self,script):
+        global kivy_recipe
+        with open(join(root_path,"build_files","kivy_recipe.py")) as f:
+            kivy_recipe = str(f.read())
         global cstruct_list
         cstruct_list = []
 
