@@ -56,6 +56,7 @@ class KivyTest:
 ```          
 ### Swift File:
 ```swift
+//PythonMain.swift
 class PythonMain : NSObject,KivyTestDelegate {
     var callback: KivyTestCallback?
     
@@ -70,7 +71,6 @@ class PythonMain : NSObject,KivyTestDelegate {
     
     override init() {
         super.init()
-        InitKivyTestDelegate(self)
     }
 
 }
