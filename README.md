@@ -18,18 +18,14 @@
     long = long (int64)
     int = int32
 
-## Generate Files:
-    in Terminal:
-        1. goto to the root of "PythonSwiftLink" folder
-        2. type "python pythoncall_builder.py <filename.py>"
-            if filename = mypythonfile.py
-            then type: `python pythoncall_builder.py mypythonfile.py`
+
 
 ## Writing Python File:
     Pick your Class Name vicely..
     it will be the main name type for the generated files and Protocol/Struct name
     
-    code:
+![image](https://user-images.githubusercontent.com/2526171/112758247-96812800-8fed-11eb-8523-fc4e6c3dff86.png)
+ ### Code:
     
     class PythonSwiftTest:
         
