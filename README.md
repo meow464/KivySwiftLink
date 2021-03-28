@@ -59,12 +59,13 @@ class KivyTest:
 # Xcode Project Setup
 
 ![New Group](https://user-images.githubusercontent.com/2526171/112771700-65c0e300-902d-11eb-9ce1-1740161fcc62.png)
-for now just call it "Cython_Headers"
 
 add the 2 following files
 runMain.h
 runMain.c
-to the group from the PythonSwiftLink folder
+to the Classes group from the PythonSwiftLink folder
+
+![Skærmbillede 2021-03-29 kl  01 53 14](https://user-images.githubusercontent.com/2526171/112772531-aa4e7d80-9031-11eb-9812-2db1bcc9145b.png)
 
 they are basicly just a copy of the original main.m
 but we need to replace the main.h
