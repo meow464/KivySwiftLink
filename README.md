@@ -179,17 +179,23 @@ kivy_test.send_python_string("Hallo from python and kivy")
 
 
 ## Arg Types:
+
+| Python        | Objective-C   |             Swift            |
+| ------------- |:--------------|:-----------------------------|
+| bytes         | const char*   | UnsafeMutablePointer\<Int8\> |
+| str           | const char*   | UnsafeMutablePointer\<Int8\> |
+| int           | int           |   Int32                      |
+| long          | long          |   Int                        |
+| float         | float         |   Float                      |
+| double        | double        |   Double                     |
+
 ### Special list types:
-        int_list = const int*
-        float_list = const float*
-        double_list = const double*
-        long_list = const long*
-        uint8_list = const unsigned char*
-
-    str = const char*
-
-    float = float
-    double = double
-    long = long (int64)
-    int = int32
+| Python         | Objective-C          |             Swift               |
+|:---------------|:---------------------|:--------------------------------|
+| [int]          | const int*           |   UnsafeMutablePointer\<Int32\> |
+| [long]         | const long*          |   UnsafeMutablePointer\<Int\>   |
+|[unsigned int]  | const unsigned int*  |   UnsafeMutablePointer\<UInt32\>  |
+|[unsigned long] | const unsigned long* |   UnsafeMutablePointer\<UInt\>  |
+| [float]        | const float*         |   UnsafeMutablePointer\<Float\> |
+| [double]       | const double*        |  UnsafeMutablePointer\<Double\> |
 
