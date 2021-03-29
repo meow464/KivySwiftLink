@@ -58,6 +58,7 @@ class KivyTest:
 
 # Xcode Project Setup
 
+
 ![New Group](https://user-images.githubusercontent.com/2526171/112771700-65c0e300-902d-11eb-9ce1-1740161fcc62.png)
 
 add the 2 following files
@@ -108,13 +109,13 @@ extension PythonMain : KivyTestDelegate {
 
 ![protocol fixed](https://user-images.githubusercontent.com/2526171/112770891-39a36300-9029-11eb-8155-4850723c7422.png)
 
-replace "code" in ```func set_KivyTest_Callback```
+replace ```code``` in func ```set_KivyTest_Callback```
 with the following:
 ```swift
 self.callback = callback
 ```
 
-replace "code" in func send_python_list\n
+replace ```code``` in func ```send_python_list```
 with the following:
 ```swift
 let array = pointer2array(data: list1, count: list1_size)
@@ -122,7 +123,7 @@ print("python list: ", array)
 
 callback!.get_swift_array(array.reversed(), array.count)
 ```
-replace "code" in func send_python_string
+replace ```code``` in func ```send_python_string```
 with the following:
 ```swift
 print(String.init(cString: string))
@@ -143,7 +144,7 @@ func pointer2array<T>(data: UnsafePointer<T>,count: Int) -> [T] {
     let buffer = UnsafeBufferPointer(start: data, count: count);
     return Array<T>(buffer)
 }
-
+```
 
 
 
