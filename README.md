@@ -2,7 +2,7 @@
 
  ## Installation
 
-PythonSwiftLink requires [Kivy](https://kivy.org) (the GUI), [Cython](https://cython.readthedocs.io/en/latest/src/tutorial/cython_tutorial.html) and [Kivy-ios](https://github.com/kivy/kivy-ios) to run.
+PythonSwiftLink requires [Kivy](https://kivy.org)(the GUI), [Cython](https://cython.readthedocs.io/en/latest/src/tutorial/cython_tutorial.html) and [Kivy-ios](https://github.com/kivy/kivy-ios) to run.
 
 Create the root folder for the whole build: 
 ```sh
@@ -27,39 +27,46 @@ toolchain build kivy
 
 
 
-## Writing Python File:
+## Writing first Python wrapper file:
     Pick your Class Name vicely..
     it will be the main name type for the generated files and Protocol/Struct name
-    
-![image](https://user-images.githubusercontent.com/2526171/112758247-96812800-8fed-11eb-8523-fc4e6c3dff86.png)
- ### Code:
-    
+in ./PythonSwiftLink/imported_pys/ 
+
+create a new file called "kivytest.py"
+insert the following code
+ ### Code: 
 ```python
+from swift_types import *
+
 class KivyTest:
 
+    # array/list of int
     @callback
-    # array/list of int
-    def get_swift_array(list1: [int]):
-        pass
-        
-    # array/list of int
-    def send_python_list(list1: [int]):
+    def get_swift_array(l: List[int]):
         pass
 
     @callback
-    def get_swift_string(string: str):
+    def get_swift_string(s: str):
         pass
 
-    def send_python_string(string: str):
+
+    # array/list of int
+    def send_python_list(l: List[int]):
+        pass
+
+    def send_python_string(s: str):
         pass
 ```          
 
-
+## Launch the wrapper gui
+From the root folder "kivyios_swift"
+run:
+```sh
+python3 main.py
+```
+![gui_app0](https://user-images.githubusercontent.com/2526171/112910616-02e64f00-90f4-11eb-8abe-0af156a55f9a.png)
 
 # Xcode Project Setup
-
-
-![New Group](https://user-images.githubusercontent.com/2526171/112771700-65c0e300-902d-11eb-9ce1-1740161fcc62.png)
 
 add the 2 following files
 runMain.h
@@ -73,6 +80,16 @@ but we need to replace the main.h
 so we can execute/setup swift classes before python/kivy gets executed
 
 also disable or delete the "main.m" file
+
+
+
+Create a new group(without folder)
+
+![New Group](https://user-images.githubusercontent.com/2526171/112898609-54d1a980-90e1-11eb-85e7-f08181ce4716.png)
+
+name it "Headers" for now.
+
+![Headers](https://user-images.githubusercontent.com/2526171/112898805-995d4500-90e1-11eb-85c1-2971c43c04de.png)
 
 ### Swift File:
 ```swift
