@@ -145,9 +145,11 @@ func pointer2array<T>(data: UnsafePointer<T>,count: Int) -> [T] {
     return Array<T>(buffer)
 }
 ```
+![run main class](https://user-images.githubusercontent.com/2526171/112787149-370c3200-9058-11eb-80e0-887c741c6f5e.png)
 
+# Python File
 
-
+## main.py
 ```python
 #main.py
 
@@ -174,11 +176,12 @@ kivy_test.send_python_list([5,4,3,2,1])
 kivy_test.send_python_string("Hallo from python and kivy")
 ```
 
+![xcode running](https://user-images.githubusercontent.com/2526171/112787816-bc441680-9059-11eb-8572-c3b28d33b908.png)
 
 
 
 
-## Arg Types:
+### Arg Types:
 
 | Python        | Objective-C   |             Swift            |
 | ------------- |:--------------|:-----------------------------|
