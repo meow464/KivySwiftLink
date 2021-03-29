@@ -65,6 +65,9 @@ run:
 python3 main.py
 ```
 ![gui_app0](https://user-images.githubusercontent.com/2526171/112910616-02e64f00-90f4-11eb-8abe-0af156a55f9a.png)
+![gui_app1](https://user-images.githubusercontent.com/2526171/112910962-b2bbbc80-90f4-11eb-8a0a-20a7d3b23f86.png)
+![gui_app2](https://user-images.githubusercontent.com/2526171/112911028-d8e15c80-90f4-11eb-9a47-138cf0a7e462.png)
+![gui_app3](https://user-images.githubusercontent.com/2526171/112911111-0c23eb80-90f5-11eb-857b-80ae4365a74e.png)
 
 # Xcode Project Setup
 
