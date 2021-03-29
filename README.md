@@ -26,7 +26,7 @@ toolchain build kivy
 ```
 install PythonSwiftLink
 ```sh
-git clone https://github.com/psychowasp/PythonSwiftLink.git
+git clone https://github.com/psychowasp/PythonSwiftLink
 ```
 
 ## Writing first Python wrapper file:
