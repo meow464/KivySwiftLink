@@ -193,12 +193,12 @@ kivy_test.send_python_string("Hallo from python and kivy")
 | double        | double        |   Double                     |
 
 ### Special list types:
-| Python         | Objective-C          |             Swift               |
-|:---------------|:---------------------|:--------------------------------|
-| [int]          | const int*           |   UnsafeMutablePointer\<Int32\> |
-| [long]         | const long*          |   UnsafeMutablePointer\<Int\>   |
-|[unsigned int]  | const unsigned int*  |   UnsafeMutablePointer\<UInt32\>  |
-|[unsigned long] | const unsigned long* |   UnsafeMutablePointer\<UInt\>  |
-| [float]        | const float*         |   UnsafeMutablePointer\<Float\> |
-| [double]       | const double*        |  UnsafeMutablePointer\<Double\> |
+| Python            | Objective-C          |             Swift               |
+|:------------------|:---------------------|:--------------------------------|
+| List[int]         | const int*           |   UnsafeMutablePointer\<Int32\> |
+| List[long]        | const long*          |   UnsafeMutablePointer\<Int\>   |
+|List[uint]         | const unsigned int*  |   UnsafeMutablePointer\<UInt32\>  |
+|List[ulong]        | const unsigned long* |   UnsafeMutablePointer\<UInt\>  |
+| List[float]       | const float*         |   UnsafeMutablePointer\<Float\> |
+| List[double]      | const double*        |  UnsafeMutablePointer\<Double\> |
 
