@@ -24,13 +24,15 @@ build kivy in the toolchain
 ```sh
 toolchain build kivy
 ```
-
-
+install PythonSwiftLink
+```sh
+git clone https://github.com/psychowasp/PythonSwiftLink.git
+```
 
 ## Writing first Python wrapper file:
     Pick your Class Name vicely..
     it will be the main name type for the generated files and Protocol/Struct name
-in ./PythonSwiftLink/imported_pys/ 
+in kivyios_swift/PythonSwiftLink/imported_pys/ 
 
 create a new file called "kivytest.py"
 insert the following code
@@ -59,7 +61,7 @@ class KivyTest:
 ```          
 
 ## Launch the wrapper gui
-From the root folder "kivyios_swift"
+From the root folder "kivyios_swift/"
 run:
 ```sh
 python3 main.py
