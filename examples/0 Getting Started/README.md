@@ -1,42 +1,15 @@
-# PythonSwiftLink
-
- ## Installation
-
-PythonSwiftLink requires [Kivy](https://kivy.org)(the GUI), [Cython](https://cython.readthedocs.io/en/latest/src/tutorial/cython_tutorial.html) and [Kivy-ios](https://github.com/kivy/kivy-ios) to run.
-
-Create the root folder for the whole build: 
-```sh
-mkdir kivyios_swift
-cd kivyios_swift
-```
-create a virtual env and activate it.
-```sh
-python3 -m venv venv
-. venv/bin/activate
-```
-
-install kivy and kivy-ios
-```sh
-pip install kivy
-pip install kivy-ios
-```
-build kivy in the toolchain
-```sh
-toolchain build kivy
-```
-install PythonSwiftLink
-```sh
-git clone https://github.com/psychowasp/PythonSwiftLink
-```
-
 ## Writing first Python wrapper file:
+
     Pick your Class Name vicely..
     it will be the main name type for the generated files and Protocol/Struct name
+
 in kivyios_swift/PythonSwiftLink/imported_pys/ 
 
 create a new file called "kivytest.py"
 insert the following code
+
  ### Code: 
+
 ```python
 from swift_types import *
 
@@ -61,11 +34,14 @@ class KivyTest:
 ```
 
 ## Launch the wrapper gui
+
 From the root folder "kivyios_swift/"
 run:
+
 ```sh
 python3 main.py
 ```
+
 ![gui_app0](https://user-images.githubusercontent.com/2526171/112910616-02e64f00-90f4-11eb-8abe-0af156a55f9a.png)
 ![gui_app1](https://user-images.githubusercontent.com/2526171/112910962-b2bbbc80-90f4-11eb-8a0a-20a7d3b23f86.png)
 ![gui_app2](https://user-images.githubusercontent.com/2526171/112911028-d8e15c80-90f4-11eb-9a47-138cf0a7e462.png)
@@ -104,6 +80,7 @@ your xcode project. Header files will always be a lowercase version your Wrapper
 Everytime you run the "build selected" in the wrappergui the .h file will also get updated. More about this below!.
 
 ### Swift File:
+
 ```swift
 //PythonMain.swift
 class PythonMain : NSObject {
@@ -133,20 +110,24 @@ extension PythonMain : KivyTestDelegate {
 
 replace ```code``` in func ```set_KivyTest_Callback```
 with the following:
+
 ```swift
 self.callback = callback
 ```
 
 replace ```code``` in func ```send_python_list```
 with the following:
+
 ```swift
 let array = pointer2array(data: l, count: l_size)
 print("python list: ", array)
 
 callback!.get_swift_array(array.reversed(), array.count)
 ```
+
 replace ```code``` in func ```send_python_string```
 with the following:
+
 ```swift
 let string = String.init(cString: s)
 print(string)
@@ -161,6 +142,7 @@ of course we got no function yet called "pointer2array" to convert a c pointer t
 so lets add that:
 
 ![Final Extension](https://user-images.githubusercontent.com/2526171/112967256-60f25100-914b-11eb-8fb6-d5d0a395f5df.png)
+
 ```swift
 // this function is using generic type, so it should cover most of the pointer array types from c/python
 func pointer2array<T>(data: UnsafePointer<T>,count: Int) -> [T] {
@@ -169,7 +151,9 @@ func pointer2array<T>(data: UnsafePointer<T>,count: Int) -> [T] {
     return Array<T>(buffer)
 }
 ```
+
 Now the only thing left on the swift side is too add this piece of code, at the bottom of the PythonMain.swift file.
+
 ```swift
 var pythonMain: PythonMain?
 
@@ -182,6 +166,7 @@ func main(_ argc: Int32, _ argv: UnsafeMutablePointer<UnsafeMutablePointer<CChar
     return 1
 }
 ```
+
 This will replace the main.m function that normaly is triggered by SDL when app is launching. 
 why we needed to add that runMain.h and .m (copy of the main.m) so we can execute it as a normal function.
 
@@ -193,6 +178,7 @@ this will be the global default class that will handle all future swift classes 
 # Python File
 
 ## main.py
+
 ```python
 #main.py
 
@@ -228,6 +214,7 @@ so what about when updating python wrapper file with more send/callback function
 Well this is why we needed the "Headers" group that always stays updated with the .h header file for your wrapper.
 
 So if new @callback is created in your python wrapper file then xcode will automatic trigger the
+
 ```
 Type 'Class' does not conform to protocol '<PythonClassName>Delegate'
 Do you want to add protocol stubs?
@@ -239,42 +226,18 @@ So the process from here on, should be as simple as:
 2. Run the "build selected" and "compile selected" in the WrapperGUI on your .py file
 3. If new Callbacks is created xcode will automatic notify you and add the stubs if you accept the prompt, and add your swift in the function code.
 4. Hit run in xcode and see the new changes
-Simple as that. 
-Always remember to have the python virtual env active, while running the wrapper gui
-and general using the kivy-ios toolchain.
+   Simple as that. 
+   Always remember to have the python virtual env active, while running the wrapper gui
+   and general using the kivy-ios toolchain.
 
 the kivy recipes doesnt rely on github uploads and uses fileurl to access the wrapper files directly from your harddrive
 making process alot simpler when having to update minor/major changes to your wrapper library.
 
 when returning to your project run the following:
+
 ```sh
 cd <path of kivy-ios root project folder>
 . venv/bin/activate
 python3 main.py
 ```
-
-# Types
-### Arg Types:
-
-| Python | Objective-C | Swift                        |
-| ------ | :---------- | :--------------------------- |
-| bytes  | const char* | UnsafeMutablePointer\<Int8\> |
-| str    | const char* | UnsafeMutablePointer\<Int8\> |
-| int    | int         | Int32                        |
-| long   | long        | Int                          |
-| float  | float       | Float                        |
-| double | double      | Double                       |
-|        |             |                              |
-|        |             |                              |
-|        |             |                              |
-
-### Special list types:
-| Python            | Objective-C          |             Swift               |
-|:------------------|:---------------------|:--------------------------------|
-| List[int]         | const int*           |   UnsafeMutablePointer\<Int32\> |
-| List[long]        | const long*          |   UnsafeMutablePointer\<Int\>   |
-|List[uint]         | const unsigned int*  |   UnsafeMutablePointer\<UInt32\>  |
-|List[ulong]        | const unsigned long* |   UnsafeMutablePointer\<UInt\>  |
-| List[float]       | const float*         |   UnsafeMutablePointer\<Float\> |
-| List[double]      | const double*        |  UnsafeMutablePointer\<Double\> |
 
