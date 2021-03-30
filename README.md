@@ -60,7 +60,14 @@ class KivyTest:
         pass
 ```
 
+
+
+[guide 0]: https://github.com/psychowasp/PythonSwiftLink/tree/main/examples/0%20Getting%20Started	"Your first wrapper file"
+
+
+
 ## Launch the wrapper gui
+
 From the root folder "kivyios_swift/"
 run:
 ```sh
