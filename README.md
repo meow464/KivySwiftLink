@@ -175,7 +175,7 @@ func pointer2array<T>(data: UnsafePointer<T>,count: Int) -> [T] {
 ```python
 #main.py
 
-from kivytest_cy import KivyTest
+from kivytest import KivyTest
 
 
 class KivyTestCallback:
