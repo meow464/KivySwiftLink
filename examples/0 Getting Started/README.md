@@ -82,6 +82,9 @@ Now goto the "cython_headers" folder in "PythonSwiftLink" and drag the newly cre
 your xcode project. Header files will always be a lowercase version your WrapperClass name with _ as prefix, to avoid name issues with the cython pyx file.
 
 Everytime you run the "build selected" in the wrappergui the .h file will also get updated. More about this below!.
+![Skærmbillede 2021-03-30 kl  10 05 53](https://user-images.githubusercontent.com/2526171/113070132-2d9ed900-91c2-11eb-9ed3-c0ff3534f766.png)
+![Skærmbillede 2021-03-30 kl  10 06 49](https://user-images.githubusercontent.com/2526171/113070145-34c5e700-91c2-11eb-820c-2bb87ff3bed8.png)
+![Skærmbillede 2021-03-30 kl  10 06 58](https://user-images.githubusercontent.com/2526171/113070152-38f20480-91c2-11eb-9a4a-90d23bb43171.png)
 
 Swift File:
 
