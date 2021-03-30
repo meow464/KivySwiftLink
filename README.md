@@ -96,6 +96,11 @@ name it "Headers" for now.
 
 ![Headers](https://user-images.githubusercontent.com/2526171/112963020-41592980-9147-11eb-925c-2b6c811d30f5.png)
 
+Now goto the "cython_headers" folder in "PythonSwiftLink" and drag the newly created "\_kivytest.h" to the "Headers" folder in
+your xcode project. Header files will always be a lowercase version your WrapperClass name with _ as prefix, to avoid name issues with the cython pyx file.
+
+Everytime you run the "build selected" in the wrappergui the .h file will also get updated. More about this below!.
+
 ### Swift File:
 ```swift
 //PythonMain.swift
@@ -212,8 +217,31 @@ kivy_test.send_python_string("Hallo from python and kivy")
 
 ![xcode running](https://user-images.githubusercontent.com/2526171/112787816-bc441680-9059-11eb-8572-c3b28d33b908.png)
 
+Xcode console printed both the print statements from python and swift soo looks like the link is working xD
 
 
+So this was ofcourse quite alot of steps to get to this simple printing script, 
+so what about when updating python wrapper file with more send/callback functions.
+
+Well this is why we needed the "Headers" group that always stays updated with the .h header file for your wrapper.
+
+So if new @callback is created in your python wrapper file then xcode will automatic trigger the
+```
+Type 'Class' does not conform to protocol '<PythonClassName>Delegate'
+Do you want to add protocol stubs?
+```
+
+So the process from here on, should be as simple as:
+
+1. Update your Python Wrapper File
+2. Run the "build selected" and "compile selected" in the WrapperGUI on your .py file
+3. If new created Callbacks is created xcode will automatic notify you and add the stubs if you accept the prompt, and add your swift in the function code.
+4. Hit run in xcode and see the new changes
+
+Simple as that. 
+
+the kivy recipes doesnt rely on github uploads and uses fileurl to access the wrapper files directly from your harddrive
+making process alot simpler when having to update minor/major changes to your wrapper library.
 
 ### Arg Types:
 
