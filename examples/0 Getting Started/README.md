@@ -1,4 +1,8 @@
-## Writing first Python wrapper file:
+# Writing first Python wrapper file:
+
+
+
+## Wrapper file
 
     Pick your Class Name vicely..
     it will be the main name type for the generated files and Protocol/Struct name
@@ -33,7 +37,7 @@ class KivyTest:
         pass
 ```
 
-## Launch the wrapper gui
+### Launch the wrapper gui
 
 From the root folder "kivyios_swift/"
 run:
@@ -47,7 +51,7 @@ python3 main.py
 ![gui_app2](https://user-images.githubusercontent.com/2526171/112911028-d8e15c80-90f4-11eb-9a47-138cf0a7e462.png)
 ![gui_app3](https://user-images.githubusercontent.com/2526171/112911111-0c23eb80-90f5-11eb-857b-80ae4365a74e.png)
 
-# Xcode Project Setup
+## Xcode Project Setup
 
 add the 2 following files 
 
@@ -79,7 +83,7 @@ your xcode project. Header files will always be a lowercase version your Wrapper
 
 Everytime you run the "build selected" in the wrappergui the .h file will also get updated. More about this below!.
 
-### Swift File:
+Swift File:
 
 ```swift
 //PythonMain.swift
@@ -177,7 +181,7 @@ this will be the global default class that will handle all future swift classes 
 
 # Python File
 
-## main.py
+### main.py
 
 ```python
 #main.py
@@ -265,4 +269,4 @@ python3 main.py
 | List[float]  | const float*         | UnsafeMutablePointer<Float>  |
 | List[double] | const double*        | UnsafeMutablePointer<Double> |
 
-[Implementing a wrapper into a kivy app class](https://github.com/psychowasp/PythonSwiftLink/tree/main/examples/1%20Implementing%20a%20wrapper%20into%20a%20kivy%20app%20class)
+# [Implementing a wrapper into a kivy app class](https://github.com/psychowasp/PythonSwiftLink/tree/main/examples/1%20Implementing%20a%20wrapper%20into%20a%20kivy%20app%20class)
