@@ -75,7 +75,7 @@ python3 main.py
 
 add the 2 following files
 runMain.h
-runMain.c
+runMain.m
 to the Classes group from the PythonSwiftLink folder
 
 ![add new main files](https://user-images.githubusercontent.com/2526171/112962846-1969c600-9147-11eb-96ae-095eb247068c.png)
