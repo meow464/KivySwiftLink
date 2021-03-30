@@ -237,12 +237,21 @@ So the process from here on, should be as simple as:
 2. Run the "build selected" and "compile selected" in the WrapperGUI on your .py file
 3. If new Callbacks is created xcode will automatic notify you and add the stubs if you accept the prompt, and add your swift in the function code.
 4. Hit run in xcode and see the new changes
-
 Simple as that. 
+Always remember to have the python virtual env active, while running the wrapper gui
+and general using the kivy-ios toolchain.
 
 the kivy recipes doesnt rely on github uploads and uses fileurl to access the wrapper files directly from your harddrive
 making process alot simpler when having to update minor/major changes to your wrapper library.
 
+when returning to your project run the following:
+```sh
+cd <path of kivy-ios root project folder>
+. venv/bin/activate
+python3 main.py
+```
+
+# Types
 ### Arg Types:
 
 | Python        | Objective-C   |             Swift            |
