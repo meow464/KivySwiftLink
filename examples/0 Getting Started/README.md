@@ -241,7 +241,7 @@ cd <path of kivy-ios root project folder>
 python3 main.py
 ```
 
-[Implementing a wrapper into a kivy app class](https://github.com/psychowasp/PythonSwiftLink/tree/main/examples/1%20Using%20Apple%20API%20part%201)
+[Implementing a wrapper into a kivy app class](https://github.com/psychowasp/PythonSwiftLink/tree/main/examples/1%20Implementing%20a%20wrapper%20into%20a%20kivy%20app%20class)
 
 ### Arg Types:
 
@@ -265,4 +265,4 @@ python3 main.py
 | List[float]  | const float*         | UnsafeMutablePointer<Float>  |
 | List[double] | const double*        | UnsafeMutablePointer<Double> |
 
-[Implementing a wrapper into a kivy app class](https://github.com/psychowasp/PythonSwiftLink/tree/main/examples/1%20Using%20Apple%20API%20part%201)
+[Implementing a wrapper into a kivy app class](https://github.com/psychowasp/PythonSwiftLink/tree/main/examples/1%20Implementing%20a%20wrapper%20into%20a%20kivy%20app%20class)
