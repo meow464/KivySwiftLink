@@ -180,7 +180,7 @@ why we needed to add that runMain.h and .m (copy of the main.m) so we can execut
 the swift version of main will first init the "PythonMain" by using the shared and assign it to a global pythonMain var.
 this will be the global default class that will handle all future swift classes that needs to be wrapped. 
 
-![run main class](https://user-images.githubusercontent.com/2526171/112787149-370c3200-9058-11eb-80e0-887c741c6f5e.png)
+![run main class](https://user-images.githubusercontent.com/2526171/112968795-ed514380-914c-11eb-8291-0e2afe5e7971.png)
 
 # Python File
 
