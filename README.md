@@ -29,7 +29,10 @@ install PythonSwiftLink
 git clone https://github.com/psychowasp/PythonSwiftLink
 ```
 
+[guide0]: https://github.com/psychowasp/PythonSwiftLink/tree/main/examples/0%20Getting%20Started	"Making first wrapper file"
+
 ## Writing first Python wrapper file:
+
     Pick your Class Name vicely..
     it will be the main name type for the generated files and Protocol/Struct name
 in kivyios_swift/PythonSwiftLink/imported_pys/ 
