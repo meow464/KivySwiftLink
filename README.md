@@ -235,7 +235,7 @@ So the process from here on, should be as simple as:
 
 1. Update your Python Wrapper File
 2. Run the "build selected" and "compile selected" in the WrapperGUI on your .py file
-3. If new created Callbacks is created xcode will automatic notify you and add the stubs if you accept the prompt, and add your swift in the function code.
+3. If new Callbacks is created xcode will automatic notify you and add the stubs if you accept the prompt, and add your swift in the function code.
 4. Hit run in xcode and see the new changes
 
 Simple as that. 
