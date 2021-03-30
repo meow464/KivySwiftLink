@@ -133,7 +133,7 @@ self.callback = callback
 replace ```code``` in func ```send_python_list```
 with the following:
 ```swift
-let array = pointer2array(data: list1, count: list1_size)
+let array = pointer2array(data: l, count: l_size)
 print("python list: ", array)
 
 callback!.get_swift_array(array.reversed(), array.count)
@@ -141,12 +141,13 @@ callback!.get_swift_array(array.reversed(), array.count)
 replace ```code``` in func ```send_python_string```
 with the following:
 ```swift
-print(String.init(cString: string))
-        
+let string = String.init(cString: s)
+print(string)
+
 let swift_string = "Hallo from swift !!!!"
 callback!.get_swift_string(swift_string)
 ```
-![Final Extension](https://user-images.githubusercontent.com/2526171/112771360-ba635e80-902b-11eb-9f89-d5994d3ba2ef.png)
+![Final Extension](https://user-images.githubusercontent.com/2526171/112967256-60f25100-914b-11eb-8fb6-d5d0a395f5df.png)
 
 of course we got no function yet called "pointer2array" to convert a c pointer to an array.
 so lets add that:
@@ -160,6 +161,25 @@ func pointer2array<T>(data: UnsafePointer<T>,count: Int) -> [T] {
     return Array<T>(buffer)
 }
 ```
+Now the only thing left on the swift side is too add this piece of code, at the bottom of the PythonMain.swift file.
+```swift
+var pythonMain: PythonMain?
+
+@_cdecl("SDL_main")
+func main(_ argc: Int32, _ argv: UnsafeMutablePointer<UnsafeMutablePointer<CChar>?>) -> Int {
+    pythonMain = PythonMain.shared
+    run_main(argc, argv)
+    //run_python(argc: Int(argc), argv: argv)
+    
+    return 1
+}
+```
+This will replace the main.m function that normaly is triggered by SDL when app is launching. 
+why we needed to add that runMain.h and .m (copy of the main.m) so we can execute it as a normal function.
+
+the swift version of main will first init the "PythonMain" by using the shared and assign it to a global pythonMain var.
+this will be the global default class that will handle all future swift classes that needs to be wrapped. 
+
 ![run main class](https://user-images.githubusercontent.com/2526171/112787149-370c3200-9058-11eb-80e0-887c741c6f5e.png)
 
 # Python File
@@ -173,12 +193,10 @@ from kivytest import KivyTest
 
 class KivyTestCallback:
 
-    # array/list of int
-    def get_swift_array(self, list1: [int]):
+    def get_swift_array(self, l: [int]):
         print("swift_array",list1)
-    # array/list of int
-
-    def get_swift_string(self, string: str):
+        
+    def get_swift_string(self, s: str):
         print(string)
 
 
