@@ -241,6 +241,8 @@ cd <path of kivy-ios root project folder>
 python3 main.py
 ```
 
+[Implementing a wrapper into a kivy app class](https://github.com/psychowasp/PythonSwiftLink/tree/main/examples/1%20Using%20Apple%20API%20part%201)
+
 ### Arg Types:
 
 | Python | Objective-C | Swift                      |
