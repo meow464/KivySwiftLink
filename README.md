@@ -29,8 +29,7 @@ install PythonSwiftLink
 git clone https://github.com/psychowasp/PythonSwiftLink
 ```
 
-[guide0]: https://github.com/psychowasp/PythonSwiftLink/tree/main/examples/0%20Getting%20Started	"Making first wrapper file"
-
+[Making first wrapper file](https://github.com/psychowasp/PythonSwiftLink/tree/main/examples/0%20Getting%20Started)
 ## Writing first Python wrapper file:
 
     Pick your Class Name vicely..
