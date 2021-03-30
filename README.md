@@ -147,12 +147,13 @@ print(string)
 let swift_string = "Hallo from swift !!!!"
 callback!.get_swift_string(swift_string)
 ```
-![Final Extension](https://user-images.githubusercontent.com/2526171/112967256-60f25100-914b-11eb-8fb6-d5d0a395f5df.png)
+
+![function missing](https://user-images.githubusercontent.com/2526171/112969631-b891bc00-914d-11eb-8788-4e262f0c1a9c.png)
 
 of course we got no function yet called "pointer2array" to convert a c pointer to an array.
 so lets add that:
 
-![Skærmbillede 2021-03-29 kl  01 17 55](https://user-images.githubusercontent.com/2526171/112771532-9d7b5b00-902c-11eb-8b13-3009cdba3a20.png)
+![Final Extension](https://user-images.githubusercontent.com/2526171/112967256-60f25100-914b-11eb-8fb6-d5d0a395f5df.png)
 ```swift
 // this function is using generic type, so it should cover most of the pointer array types from c/python
 func pointer2array<T>(data: UnsafePointer<T>,count: Int) -> [T] {
