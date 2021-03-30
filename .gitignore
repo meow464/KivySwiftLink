@@ -10,3 +10,10 @@ tmp/
 *.pyc
 .DS_Store
 builds/.DS_Store
+build_files/kivy_recipe copy.py
+build_files/Setup - Kopi.py
+cython_headers/_kivytest.h
+cython_headers/kivytest.h
+cython_headers/kivytest_.h
+*.zip
+imported_pys/kivytest.py
