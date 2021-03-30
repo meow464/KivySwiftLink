@@ -29,4 +29,5 @@ install PythonSwiftLink
 git clone https://github.com/psychowasp/PythonSwiftLink
 ```
 
-[Writing first Python wrapper file](https://github.com/psychowasp/PythonSwiftLink/tree/main/examples/0%20Getting%20Started)
+[Setting up your project and writing first Python wrapper file](https://github.com/psychowasp/PythonSwiftLink/tree/main/examples/0%20Getting%20Started)
+
