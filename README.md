@@ -78,7 +78,7 @@ runMain.h
 runMain.c
 to the Classes group from the PythonSwiftLink folder
 
-![Skærmbillede 2021-03-29 kl  01 53 14](https://user-images.githubusercontent.com/2526171/112772531-aa4e7d80-9031-11eb-9812-2db1bcc9145b.png)
+![add new main files](https://user-images.githubusercontent.com/2526171/112962846-1969c600-9147-11eb-96ae-095eb247068c.png)
 
 they are basicly just a copy of the original main.m
 but we need to replace the main.h
@@ -90,11 +90,11 @@ also disable or delete the "main.m" file
 
 Create a new group(without folder)
 
-![New Group](https://user-images.githubusercontent.com/2526171/112898609-54d1a980-90e1-11eb-85e7-f08181ce4716.png)
+![New Group](https://user-images.githubusercontent.com/2526171/112962949-31d9e080-9147-11eb-83a4-9dac01e0bb3b.png)
 
 name it "Headers" for now.
 
-![Headers](https://user-images.githubusercontent.com/2526171/112898805-995d4500-90e1-11eb-85c1-2971c43c04de.png)
+![Headers](https://user-images.githubusercontent.com/2526171/112963020-41592980-9147-11eb-925c-2b6c811d30f5.png)
 
 ### Swift File:
 ```swift
@@ -103,18 +103,11 @@ class PythonMain : NSObject {
     
     var callback: KivyTestCallback?
     
-    static var shared: PythonMain?
+    static let shared = PythonMain()
     
-    class func sharedInstance() -> PythonMain {
-        if shared == nil {
-            shared = PythonMain()
-        }
-        return shared!
-    }
-    
-    override init() {
+    private override init() {
         super.init()
-        
+        InitKivyTestDelegate(self)
     }
 }
 ```
