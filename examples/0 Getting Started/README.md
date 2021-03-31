@@ -98,8 +98,11 @@ Name it "PythonMain.swift" since this will act as the main class to connect all 
 
 and properly the most important step of all !!!! select "Create Bridging Header".... swift needs this file to import all other objc / c librarys that incl our generated wrapper.
 ![Skærmbillede 2021-03-30 kl  10 06 58](https://user-images.githubusercontent.com/2526171/113070152-38f20480-91c2-11eb-9a4a-90d23bb43171.png)
+inside the bridging header file insert these 2 lines
+1 for our runmain.h and the other for our new wrapper \_kivytest.h
+![Skærmbillede 2021-03-31 kl  03 50 57](https://user-images.githubusercontent.com/2526171/113078924-59c35580-91d4-11eb-8d05-5c7e68d09fb4.png)
 
-Swift File:
+Now lets finally add some swift code:
 
 ```swift
 //PythonMain.swift
