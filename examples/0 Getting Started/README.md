@@ -80,10 +80,17 @@ name it "Headers" for now.
 
 Now goto the "cython_headers" folder in "PythonSwiftLink" and drag the newly created "\_kivytest.h" to the "Headers" folder in
 your xcode project. Header files will always be a lowercase version your WrapperClass name with _ as prefix, to avoid name issues with the cython pyx file.
-
+![Skærmbillede 2021-03-30 kl  11 49 47](https://user-images.githubusercontent.com/2526171/113075202-cfc3be80-91cc-11eb-8dfb-e465eeffe8af.png)
 Everytime you run the "build selected" in the wrappergui the .h file will also get updated. More about this below.
+
+Time to add your first swift script
+Select the "Sources" group and then goto File > New > File.
+![Skærmbillede 2021-03-31 kl  03 12 23](https://user-images.githubusercontent.com/2526171/113076343-1f0aee80-91cf-11eb-8170-396df5f07217.png)
+Select Swift File
 ![Skærmbillede 2021-03-30 kl  10 05 53](https://user-images.githubusercontent.com/2526171/113070132-2d9ed900-91c2-11eb-9ed3-c0ff3534f766.png)
+Name it "PythonMain.swift" since this will act as the main class to connect all other classes in the next tutorials.
 ![Skærmbillede 2021-03-30 kl  10 06 49](https://user-images.githubusercontent.com/2526171/113070145-34c5e700-91c2-11eb-820c-2bb87ff3bed8.png)
+and properly the most important step of all !!!! select "Create Bridging Header".... swift needs this file to import all other objc / c librarys that incl our generated wrapper.
 ![Skærmbillede 2021-03-30 kl  10 06 58](https://user-images.githubusercontent.com/2526171/113070152-38f20480-91c2-11eb-9a4a-90d23bb43171.png)
 
 Swift File:
