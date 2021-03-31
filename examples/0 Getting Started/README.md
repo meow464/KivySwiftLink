@@ -80,6 +80,8 @@ name it "Headers" for now.
 
 Now goto the "cython_headers" folder in "PythonSwiftLink" and drag the newly created "\_kivytest.h" to the "Headers" folder in
 your xcode project. Header files will always be a lowercase version your WrapperClass name with _ as prefix, to avoid name issues with the cython pyx file.
+
+![Skærmbillede 2021-03-31 kl  03 24 13](https://user-images.githubusercontent.com/2526171/113077093-be7cb100-91d0-11eb-9081-b31425faca1f.png)
 ![Skærmbillede 2021-03-30 kl  11 49 47](https://user-images.githubusercontent.com/2526171/113075202-cfc3be80-91cc-11eb-8dfb-e465eeffe8af.png)
 Everytime you run the "build selected" in the wrappergui the .h file will also get updated. More about this below.
 
