@@ -1,5 +1,11 @@
 # Using Apple API part 1
 
+
+
+
+
+
+
 add 
 
 ```swift
@@ -31,8 +37,6 @@ func get_viewcontroller() -> UIViewController? {
         print("ios_wrapper: unable to get key window from shared application\n")
         return nil
     }
-    self.window = window
-
     return window!.rootViewController
 }
 ```
