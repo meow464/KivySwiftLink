@@ -263,13 +263,13 @@ python3 main.py
 
 ### Special list types:
 
-| Python       | Objective-C          | Swift                        |
-| ------------ | -------------------- | ---------------------------- |
-| List[int]    | const int*           | UnsafeMutablePointer<Int32>  |
-| List[long]   | const long*          | UnsafeMutablePointer<Int>    |
-| List[uint]   | const unsigned int*  | UnsafeMutablePointer<UInt32> |
-| List[ulong]  | const unsigned long* | UnsafeMutablePointer<UInt>   |
-| List[float]  | const float*         | UnsafeMutablePointer<Float>  |
-| List[double] | const double*        | UnsafeMutablePointer<Double> |
+| Python       | Objective-C          | Swift                         |
+| ------------ | -------------------- | ----------------------------- |
+| List[int]    | const int*           | UnsafeMutablePointer\<Int32\> |
+| List[long]   | const long*          | UnsafeMutablePointer\<Int>    |
+| List[uint]   | const unsigned int*  | UnsafeMutablePointer\<UInt32> |
+| List[ulong]  | const unsigned long* | UnsafeMutablePointer\<UInt>   |
+| List[float]  | const float*         | UnsafeMutablePointer\<Float>  |
+| List[double] | const double*        | UnsafeMutablePointer\<Double> |
 
 # [Implementing a wrapper into a kivy app class](https://github.com/psychowasp/PythonSwiftLink/tree/main/examples/1%20Implementing%20a%20wrapper%20into%20a%20kivy%20app%20class)
