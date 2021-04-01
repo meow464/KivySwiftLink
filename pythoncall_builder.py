@@ -7,7 +7,7 @@ import re
 import sys
 import os
 import subprocess
-from build_files.pack_files import pack_all,remove_cache_file
+from PythonSwiftLink.build_files.pack_files import pack_all,remove_cache_file
 import configparser
 import json
 from os.path import join
@@ -69,6 +69,7 @@ ctypedef_list_dict = {
     "float": "const float*",
     "double": "const double*",
     "str": "const char* const*",
+    "short": "const short*"
     
 }
 
@@ -87,7 +88,7 @@ typedef_types_dict = {
     "object": "const void* _Nonnull",
     "json": "const char* _Nonnull",
     "bytes": "const char*  _Nonnull",
-
+    "short": "const short*  _Nonnull",
     "bool": "BOOL",
 
 
@@ -101,6 +102,7 @@ typedef_list_dict = {
     "float": "const float* _Nonnull",
     "double": "const double* _Nonnull",
     "str": "const char* _Nonnull const* _Nonnull",
+    "short": "const short*  _Nonnull"
 }
 
 python_types_dict = {
@@ -118,6 +120,7 @@ python_types_dict = {
     "object": "object",
     "json" : "object",
     "bytes": "bytes",
+    "short": "int",
 
     "PythonCallback": "PythonCallback"
 }
@@ -167,7 +170,7 @@ call_args_dict = {
 call_list_dict = {
     "int": "[{arg}[x] for x in range({arg}_size)]",
     "long": "[{arg}[x] for x in range({arg}_size)]",
-    "uint8": "[{arg}[x] for x in range({arg}_size)]",
+    "uint8": "{arg}[:{arg}_size]",
     "float": "[{arg}[x] for x in range({arg}_size)]",
     "double": "[{arg}[x] for x in range({arg}_size)]",
     "str": "[{arg}[x].decode('utf8') for x in range({arg}_size)]",
@@ -185,13 +188,14 @@ arg_size_dict = {
         "int": 4,
         "float": 4,
         "long": 8,
+        "short": 2,
     }
 cython_class = """\
 cdef public void* {_class}_voidptr
 cdef class {_class}:
-\tdef __init__(self,object _{call_var}):
+\tdef __init__(self,object callback_class):
 \t\tglobal {call_var} 
-\t\t{call_var} = <const void*>_{call_var}
+\t\t{call_var} = <const void*>callback_class
 \t\tprint("{call_var} init:", (<object>{call_var}))
 """
 
@@ -250,6 +254,7 @@ arg_size_dict = {
         "float": 4,
         "long": 8,
         "double": 8,
+        "short": 2,
     }
 
 ptr_type_dict = {
@@ -265,6 +270,8 @@ ptr_type_dict = {
         "float": "float",
         "long": "long",
         "double": "double",
+        "uint8": "unsigned char",
+        "short": "short"
     }
 
 list_2_array =  """\
@@ -345,6 +352,9 @@ cdef {returns} cy_{title}({args}) with gil:
 
 """
 
+
+
+
 objc_structinit_string = """\
 typedef struct {title}Struct {call};
 
@@ -366,7 +376,7 @@ protocol_static = "\nstatic id<{title}Delegate> _Nonnull {subtitle};"
 
 m_header_string = """\
 #import <Foundation/Foundation.h>
-#import "{title}.h"
+#import "_{title}.h"
 """
 class Arg():
     python_type: str
@@ -443,9 +453,9 @@ class Function():
         self.call_target = ""
 
 class PythonCallBuilder():
-
-    def __init__(self):
-        pass
+    app_dir: str
+    def __init__(self,app_dir):
+        self.app_dir = app_dir
 
 
     def get_calltitle(self):
@@ -456,6 +466,8 @@ class PythonCallBuilder():
             pass
         else: 
             return t
+
+    
         
     def gen_send_start_function(self, pointers:list):
         typedef_types_dict['PythonCallback'] = calltitle.lower()
@@ -476,16 +488,59 @@ class PythonCallBuilder():
         send_arg.objc_name = 'callback'
         send_arg.cy_name = 'callback'
         send.args_.append(send_arg)
-        send.name = 'Send%sCallback' % calltitle
+        send.name = 'set_%s_Callback' % calltitle
         # send.real_args = ((calltitle.lower(),'callback')),
 
         pointers.append(send)
 
-    def parse_code(self, string:str):
+    def parse_helper(self, string: str):
+        print("parse_helper:")
         module = ast.parse(string)
+        body_list = module.body
+        for class_body in body_list:
+            if isinstance(class_body,ast.ClassDef):
+                class_list = class_body.body
+                
+                cbody_del_list = []
+                for cbody in class_body.body:
+                    _cdec = None
+                    print(cbody,cbody.name)
+                    dec_list = [dec.id for dec in cbody.decorator_list]
+                    
+                    
+
+                    if "callback" in dec_list:
+                        print("removing:",cbody.name)
+                        #class_body.body.remove(cbody)
+                        cbody_del_list.append(cbody)
+                    else:
+                        cbody: ast.FunctionDef
+                        print(cbody.args.args)
+                        for arg in cbody.args.args:
+                            print(arg.__dict__)
+                            print(arg.annotation.__dict__)
+                            print("is list:",isinstance(arg, ast.List))
+                            anno = ast.Name
+                            anno.id = "class"
+                        cbody.args.args.insert(0,ast.arg(arg="self",annotation = None))
+                        #cbody.args.args()
+                
+                for rem_body in cbody_del_list:
+                    class_body.body.remove(rem_body)
+
+        src = astor.to_source(module)
+        print(src)
+        return src
+
+            
+
+    def parse_code(self, string:str):
+        module = ast.parse(string.replace("List[","["))
         func_pointers = []
         new_func_ptrs = []
         send_functions = []
+        global kivy_properties
+        kivy_properties = []
         global calltitle
         for class_body in module.body:
             if isinstance(class_body,ast.Assign):
@@ -498,8 +553,11 @@ class PythonCallBuilder():
                 _cdec = None
                 #print(class_body.name)
                 for cdec in class_body.decorator_list:
-                    
-                    _cdec = cdec.id
+                    #print(cdec.__dict__)
+                    if isinstance(cdec,ast.Call):
+                        print(cdec.func.id,cdec.args[0].id)
+                    else:
+                        _cdec = cdec.id
                 if not _cdec:
                     calltitle = class_body.name
                     self.gen_send_start_function(send_functions)
@@ -522,6 +580,7 @@ class PythonCallBuilder():
                     for cbody in class_body.body:
                         
                         if isinstance(cbody,ast.FunctionDef):
+
                             #print(ast.get_docstring(cbody))
 
                             temp = Function()
@@ -579,22 +638,40 @@ class PythonCallBuilder():
                                 func_arg.python_name = _arg.arg
                                 func_arg.cy_name = _arg.arg
 
-                                if not isinstance(_arg.annotation,ast.Call):
+                                if not isinstance(_arg.annotation,ast.List):
+                                    #print("not list",_arg.__dict__)
+                                    
+                                    # if isinstance(_arg.annotation, ast.Subscript):
+                                    #     print(_arg.annotation.__dict__)
+                                    #     print(_arg.annotation.slice.__dict__)
+                                    #     print(_arg.annotation.value.__dict__)
+                                    #     arg_type = _arg.annotation.slice.value.id
+                                    #     _arg_id = _arg.arg
+
+                                    #else:
                                     arg_type = _arg.annotation.id
+                                    #print("\t argtype:",arg_type)
                                     func_arg.is_list = False
                                     func_arg.python_type = python_types_dict[arg_type]
                                     func_arg.cy_type = ctypedef_types_dict[arg_type]
 
                                     func_arg.objc_type = typedef_types_dict[arg_type]
 
-                                    func_arg_list.append(_arg.annotation.id)
-                                    temp.arg_types.append(_arg.annotation.id)
-                                    temp.python_args.append(python_types_dict[_arg.annotation.id])
+                                    func_arg_list.append(arg_type)
+                                    #func_arg_list.append(_arg.annotation.id)
+                                    temp.arg_types.append(arg_type)
+                                    #temp.arg_types.append(_arg.annotation.id)
+                                    temp.python_args.append(python_types_dict[arg_type])
                                     if arg_type == "json":
                                         func_arg.is_json = True
                                 else:
                                     #### Call (list type)####
-                                    arg_type = _arg.annotation.args[0].id
+                                    #print("is list:", _arg.annotation.__dict__)
+                                    #print(_arg.annotation.elts[0].__dict__)
+                                    arg_type = _arg.annotation.elts[0].id
+                                    #print("\t argtype:",arg_type)
+                                    #arg_type = _arg.annotation.slice.value.id
+                                    #arg_type = _arg.annotation.args[0].id
                                     func_arg.is_list = True
                                     func_arg.python_type = "list"
                                     func_arg.cy_type = ctypedef_list_dict[arg_type]
@@ -608,6 +685,7 @@ class PythonCallBuilder():
 
                                     list_counter.cy_type = "long"
                                     list_counter.cy_name = "%s_size" % _arg.arg
+                                    list_counter.python_name = "%s_size" % _arg.arg
                                     list_counter.objc_type = "long"
                                     list_counter.objc_name = "arg%d_size" % i
                         
@@ -625,7 +703,67 @@ class PythonCallBuilder():
                                     item: Expr = child
 
                                     temp.callback = item.value.s
+                        if isinstance(cbody,ast.AnnAssign):
+                            #print("found AnnAssign",cbody.__dict__)
+                            #print("\t%s"%cbody.target.id)
+                            #print("\t%s"%cbody.annotation.id)
+                            if cbody.annotation.id in ("NumericProperty"):
+                                print("Dictionary")
+                        if isinstance(cbody,ast.Assign):
+                            #print("found Assign",cbody.__dict__)
+                            #print(cbody.targets[0].__dict__,cbody.value.__dict__)
+                            if isinstance(cbody.value,ast.Call):
+                                if hasattr(cbody.value,"func"):
+                                    #print(cbody.value.__dict__)
+                                    func_id = cbody.value.func.id
+                                    _func = cbody.value.func
 
+                                    #print(cbody.value.func.__dict__)
+                                    if func_id == "NumericProperty":
+                                        
+                                        prop_body: ast.Assign = cbody
+                                        target_id = prop_body.targets[0].id
+                                        prop_arg_type = cbody.value.args[0].id 
+                                        #print(func_id,target_id,prop_arg_type,prop_body.targets[0].__dict__)
+                                        kivy_properties.append(target_id)
+
+                                        #send_functions.append(temp)
+                                        prop_temp = Function()
+                                        prop_temp.name = "on_%s" % target_id
+                                        send_functions.append(prop_temp)
+                                        for i,_arg_tuple in enumerate([("wid","object"),(target_id,prop_arg_type)]):
+                                            _arg_name,_arg_type = _arg_tuple
+                                            prop_arg = Arg()
+                                            prop_temp.args_.append(prop_arg)
+                                            prop_arg.objc_name = "arg%d" % i
+                                            prop_arg.call_name = _arg_name
+
+                                            prop_arg.python_name = _arg_name
+                                            prop_arg.cy_name = _arg_name
+                                            prop_arg.python_type = python_types_dict[_arg_type]
+                                            prop_arg.cy_type = ctypedef_types_dict[_arg_type]
+
+                                            prop_arg.objc_type = typedef_types_dict[_arg_type]
+                                        prop_temp.call_args.append(_arg_name)
+                                        #if _cdec is "struct":
+                                        # cstruct_args = []
+                                        # for line in class_body.body:
+                                        #     cstruct_args.append((line.annotation.id,line.target.id))
+                                        # #print(cstruct_args)
+                                        # #print(self.gen_c_struct_custom(class_body.name,cstruct_args))
+                                        # cstruct_list.append((class_body.name,cstruct_args))
+                                        # python_types_dict.update({class_body.name:class_body.name})
+                                        # #print(python_types_dict)
+                                        # ctypedef_types_dict.update({class_body.name:class_body.name})
+                                        # typedef_types_dict.update({class_body.name:class_body.name})
+                                        # call_args_dict.update({class_body.name:"{arg}"})
+                                        # send_args_dict.update({class_body.name:"{arg}"})
+                                        #prop.
+                                        
+                                        
+
+
+                        
             if isinstance(class_body,ast.ClassDef):
                 pass
         
@@ -768,8 +906,11 @@ class PythonCallBuilder():
         class_list = []
         class_list.append(cython_class.format(_class=title,call_var=call_var) )
         class_list.append(fill_struct )
-        class_list.append("\t\tSend%sCallback(callbacks)" % calltitle )
-        
+        class_list.append("\t\tset_%s_Callback(callbacks)" % calltitle )
+        #print(kivy_properties)
+        for _prop in kivy_properties:
+            prop_str = "{0}.bind({1}=self.on_{1})".format("callback_class",_prop)
+            class_list.append("\t\t%s" % prop_str)
         return "\n".join(class_list)
 
     def gen_send_args(self, func_arg:Arg):
@@ -814,6 +955,7 @@ class PythonCallBuilder():
                     if _arg.is_json:
                         args2_list.append(send_args_dict["json"].format(arg=_arg.python_name) )
                     else:
+                        #print("send_arg name:",send_args_dict[_arg.python_type].format(arg=_arg.python_name))
                         args2_list.append(send_args_dict[_arg.python_type].format(arg=_arg.python_name) )
                     
         if rtn:
@@ -829,6 +971,7 @@ class PythonCallBuilder():
                     call = "return {title}()".format(title=title)
         else:
             if has_args:
+                #print("args2_list",args2_list)
                 call = "{title}({args2})".format(title=title, args2= ", ".join(args2_list))
             else:
                 call = "{title}()".format(title=title)
@@ -870,7 +1013,7 @@ class PythonCallBuilder():
     def gen_send_functions(self, pointers:list,objc=False,subtitle=None,header=False):
         for i in range(len(pointers)):
             ptr:Function = pointers[i]
-            print(ptr.name)
+            #print(ptr.name)
         sfunctions = []
         if not header and objc:
             s1 = re.sub( r"([A-Z])", r" \1", calltitle).split()
@@ -950,11 +1093,15 @@ class PythonCallBuilder():
                 types_str = ", ".join(types_list)
                 if header:
                     #for arg in func.args_:
+                    
                     types_str = ", ".join([" ".join((arg.cy_type,arg.cy_name)) for arg in func.args_])
                     sfunctions.append( ext_cyfunc.format(title=func.name, args=types_str ,returns=_rtns) )
                 else:
+                    #print("send_func",func.name)
+                    for _arg_ in func.args_:
+                        print(_arg_.__dict__)
                     sfunctions.append( self.gen_cyfunc_sends(func,types_list,", ".join(args2),func.returns,len(func.args_) != 0) )
-
+                # pprint("".join(sfunctions)
             
         if not header and not objc:
             del sfunctions[0]
@@ -1112,9 +1259,9 @@ class PythonCallBuilder():
         # try:
         #with open("./builds/%s/module.ini" % class_name, 'w') as configfile:
         
-        if not os.path.exists(join(root_path,"builds",class_name)):
-            os.mkdir(join(root_path,"builds",class_name))
-        with open(join(root_path,"builds",class_name,"module.ini"), 'w') as configfile:
+        if not os.path.exists(join(self.app_dir,"builds",class_name)):
+            os.mkdir(join(self.app_dir,"builds",class_name))
+        with open(join(self.app_dir,"builds",class_name,"module.ini"), 'w') as configfile:
             configfile.write(json.dumps([class_name,_tmp],indent=4))
             #configfile.close()
 
@@ -1122,7 +1269,7 @@ class PythonCallBuilder():
 
         #json.dump(_mfile,join(root_path,"builds",class_name,"module_name.json"))
         #kivy_recipe_path = join("/Volumes/WorkSSD/kivy-ios-11.04.20_copy/recipes",calltitle)
-        builds = join(root_path,"builds",class_name)
+        builds = join(self.app_dir,"builds",class_name)
         with open(join(builds,"kivy_recipe.py"),'w') as recipe:
             new_recipe = kivy_recipe
 
@@ -1149,7 +1296,7 @@ class PythonCallBuilder():
 
     def build_py_files(self,script):
         global kivy_recipe
-        with open(join(root_path,"build_files","kivy_recipe.py")) as f:
+        with open(join(self.app_dir,"build_files","kivy_recipe.py")) as f:
             kivy_recipe = str(f.read())
         global cstruct_list
         cstruct_list = []
@@ -1159,6 +1306,15 @@ class PythonCallBuilder():
         test = pyfile.read()
 
         functions = self.parse_code(test)
+        site_manager_path = join(root_path,"venv/lib/python3.8/site-packages")
+        # py_string = ""
+        # with open(py_file, "r") as f:
+        #     py_string = str( f.read().replace("@callback", "") )
+        #     #py_string.splitlines()
+        # with open(join(site_manager_path,"%s_cy.py" % calltitle), "w") as f:
+        with open(join(site_manager_path,"%s.py" % calltitle.lower()), "w") as f:
+            f.write(self.parse_helper(test))
+        
         func_pointers,send_functions,ptr_types = functions
 
         pointer_types = []
@@ -1166,7 +1322,7 @@ class PythonCallBuilder():
 
         objc_pointer_types = []
         objc_pointers = self.gen_cyfunction_pointers(func_pointers,ptr_types,True)
-        BUILD_DIR = join(root_path,"builds")
+        BUILD_DIR = join(self.app_dir,"builds")
         try:
             os.mkdir(BUILD_DIR)
             #os.mkdir("builds/%s" % calltitle.lower())
@@ -1176,12 +1332,13 @@ class PythonCallBuilder():
             os.mkdir(join(BUILD_DIR,calltitle.lower()))
         except:
             print("builds/%s exist" % calltitle.lower())
-        f = open(join(BUILD_DIR,calltitle.lower(),calltitle.lower()+"_cy.pyx"), "w+")
+        # f = open(join(BUILD_DIR,calltitle.lower(),calltitle.lower()+"_cy.pyx"), "w+")
+        f = open(join(BUILD_DIR,calltitle.lower(),calltitle.lower()+".pyx"), "w+")
         cy_list = [
             "import json",
             "from libc.stdlib cimport malloc, free",
             "from libcpp cimport bool as bool_t",
-            "cdef extern from \"%s.h\":" % calltitle.lower(),
+            "cdef extern from \"_%s.h\":" % calltitle.lower(),
             "\t\n".join([self.gen_c_struct_custom(arg[0],arg[1]) for arg in cstruct_list]),
             "",
             "\t######## cdef extern Callback Function Pointers: ########",
@@ -1229,11 +1386,11 @@ class PythonCallBuilder():
         objc_hlist.append(self.gen_send_functions(send_functions,True,None,True))
 
         objc_hscript = "".join(objc_hlist)
-        f = open(join(BUILD_DIR,calltitle.lower(),calltitle.lower()+".h"), "w+")
+        f = open(join(BUILD_DIR,calltitle.lower(),"_%s.h" % calltitle.lower()), "w+")
         f.write(objc_hscript)
         f.close()
 
-        f = open(join(BUILD_DIR,calltitle.lower(),calltitle.lower()+".m"), "w+")
+        f = open(join(BUILD_DIR,calltitle.lower(),"_%s.m" % calltitle.lower()), "w+")
         f.write(self.gen_objc_m_header(calltitle.lower()))
         f.write("\n")
         f.write(self.gen_send_functions(send_functions,True,calltitle))
@@ -1244,7 +1401,8 @@ class PythonCallBuilder():
 
         return (cy_script,objc_hscript)
 
-kivy_folder = "/Volumes/WorkSSD/kivy-ios-11.04.20_copy/"
+#kivy_folder = "/Volumes/WorkSSD/kivy-ios-11.04.20_copy/"
+kivy_folder = "/Volumes/WorkSSD/kivy_ios/"
 def ProcessFiles(t,pack):
     p_build = PythonCallBuilder()
     t = sys.argv[1]
@@ -1255,8 +1413,10 @@ def ProcessFiles(t,pack):
     elif t == "build_compile":
         p_build.build_py_files()
         pack_all("master.zip",calltitle)
-        subprocess.call(['python3.7',"%s/toolchain.py" % kivy_folder, "clean", calltitle])
-        subprocess.call(['python3.7',"%s/toolchain.py" % kivy_folder, "build", calltitle])
+        # subprocess.call(['python3.7',"%s/toolchain.py" % kivy_folder, "clean", calltitle])
+        # subprocess.call(['python3.7',"%s/toolchain.py" % kivy_folder, "build", calltitle])
+        subprocess.call(['',"toolchain" % kivy_folder, "clean", calltitle])
+        subprocess.call(['',"toolchain" % kivy_folder, "build", calltitle])
         remove_cache_file(kivy_folder+".cache/"+calltitle+"-master.zip")
 
         
