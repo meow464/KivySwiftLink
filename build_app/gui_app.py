@@ -32,6 +32,10 @@ from filecmp import cmp,cmpfiles
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
+from pbxproj import XcodeProject,PBXKey
+from pbxproj.pbxextensions.ProjectFiles import FileOptions
+
+
 Window.size = (1920, 1080)
 Window.left = 0
 
@@ -111,6 +115,9 @@ Builder.load_string("""
                     id: codeviews
         Screen:
             name: "screen1"
+            BoxLayout:
+                Label:
+                    text: "test"
 
 """)
 
@@ -259,6 +266,28 @@ class KivySwiftLink(App):
         
         #shutil.copy(py_file, )
         pack_all(self.app_dir,"master.zip",calltitle)
+        self.update_header_group("kivy_example2")
+        #
+    
+    def update_header_group(self,name):
+        path = join(self.root_path, "%s-ios/%s.xcodeproj/project.pbxproj" % (name, name))
+        project = XcodeProject.load(path)
+        header_classes = project.get_or_create_group("Headers")
+        #print(header_classes.children[0]._get_comment())
+        header_list = set([child._get_comment() for child in header_classes.children])
+        header_dir = join(self.app_dir,"cython_headers")
+        print(header_dir)
+        project_updated = False
+        for (dirpath, dirnames, filenames) in os.walk(header_dir):
+            for file in filenames:
+                _file = join(header_dir,file)
+                if file not in header_list:
+                    project.add_file(_file, parent=header_classes)
+                    project_updated = True
+        if project_updated:
+            project.backup()
+            project.save()
+        print(header_classes)
 
     def build_wdog_event(self,filename):
         p_build = PythonCallBuilder(self.app_dir)

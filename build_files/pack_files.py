@@ -5,6 +5,7 @@ import sys
 import shutil
 import configparser
 import json
+import glob
 from os.path import join
 
 root_path = os.path.dirname(sys.argv[0])
@@ -22,8 +23,8 @@ def zipdir(path,src, ziph):
         if len(dirs) != 0:
             src.append((root,dirs))
 
-def clear_temp():
-    src = join(root_path,"tmp")
+def clear_temp(root):
+    src = join(root,"tmp")
     if os.path.exists(src):
         #print("tmp exist")
         shutil.rmtree(src)
@@ -33,11 +34,12 @@ def clear_temp():
         #         shutil.rmtree(s)
 
 def remove_cache_file(src):
+    print("remove_cache_file",src)
     if os.path.exists(src):
         os.remove(src)
             
 
-def create_temp_copy_files(src,dst,key):
+def create_temp_copy_files(app_dir,src,dst,key):
     modules = {}
     #config = configparser.ConfigParser()
     
@@ -72,8 +74,8 @@ def create_temp_copy_files(src,dst,key):
     #         shutil.copytree(s, d, False, None)
     
     #print(root_path)
-    shutil.copy(join(root_path,"build_files/Setup.py"),join(root_path,"tmp/Setup.py"))
-    shutil.copy(join(root_path,"build_files/files_list.py"),join(root_path,"tmp/files_list.py"))
+    shutil.copy(join(app_dir,"build_files/Setup.py"),join(app_dir,"tmp/Setup.py"))
+    shutil.copy(join(app_dir,"build_files/files_list.py"),join(app_dir,"tmp/files_list.py"))
     
 
     # ex_config = configparser.ConfigParser()
@@ -87,12 +89,12 @@ def create_temp_copy_files(src,dst,key):
         configfile.close()
 
 
-def pack_all(src,dst):
-    clear_temp()
-    create_temp_copy_files(join(root_path,"builds"),join(root_path,"tmp"),dst.lower())
-    builds = join(root_path,"tmp")
+def pack_all(app_dir,src,dst):
+    clear_temp(app_dir)
+    create_temp_copy_files(app_dir,join(app_dir,"builds"),join(app_dir,"tmp"),dst.lower())
+    builds = join(app_dir,"tmp")
     sources = []
-    exports_path = join(root_path,"Exports")
+    exports_path = join(app_dir,"Exports")
     if not os.path.exists(exports_path):
         os.makedirs(exports_path)
     if not os.path.exists(join(exports_path,dst) ):
@@ -106,7 +108,11 @@ def pack_all(src,dst):
     #zipf.write(os.path.join(build_files, "Setup.py"), arcname=os.path.join(build_files.replace(build_files, "files"), os.path.join(build_files, "Setup.py")))
     zipf.close()
     # #shutil.move('Exports/' + src,dst + src)
-    
+    files = glob.iglob(os.path.join(builds, "*.h"))
+    for file in files:
+        if os.path.isfile(file):
+            shutil.copy2(file, join(app_dir,"cython_headers"))
+    #shutil.copy(join(builds,"*.h"), join(app_dir,"cython_headers"))
 
 if __name__ == '__main__':
     pack_all("Python.zip","Exports/cache/")

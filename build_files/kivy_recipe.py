@@ -1,4 +1,4 @@
-from toolchain import CythonRecipe, shprint
+from kivy_ios.toolchain import CythonRecipe, shprint
 from os.path import join
 from distutils.dir_util import copy_tree
 #from .module_name import *
@@ -24,12 +24,12 @@ class #RECIPENAME_Recipe(CythonRecipe):
     def install(self):
         pass
         arch = list(self.filtered_archs)[0]
-        build_dir = join(self.get_build_dir(arch.arch), 'build', 'lib.macosx-10.14-x86_64-3.7')
+        build_dir = join(self.get_build_dir(arch.arch), 'build', 'lib.macosx-10.15-x86_64-3.8')
         filename = '__init__.py'
         with open(os.path.join(build_dir, filename), 'wb'):
             pass
         #dist_dir  = join(self.ctx.dist_dir, 'root', 'python3', 'lib', 'python3.7', 'site-packages', 'noke')
-        build_path = ['root', 'python3', 'lib', 'python3.7', 'site-packages']
+        build_path = ['root', 'python3', 'lib', 'python3.8', 'site-packages']
         if module_folder != '' and module_folder != None:
             build_path.append(module_name)
 

@@ -12,7 +12,9 @@ import PDFKit
 
 
 
-class WebViewer: UIViewController,WKNavigationDelegate {
+class WebViewer: UIViewController,
+                 WKNavigationDelegate {
+    
     var webview: WKWebView!
     
     override func loadView() {
@@ -58,4 +60,20 @@ class PDF_Viewer: UIViewController {
         return nil
     }
     
+}
+
+class ViewController: UIViewController,
+                      UIImagePickerControllerDelegate,
+                      UINavigationControllerDelegate{
+    
+    func openCamera() {
+        if UIImagePickerController.isSourceTypeAvailable(.camera) {
+            let imagePicker = UIImagePickerController()
+                imagePicker.delegate = self
+                imagePicker.sourceType = .camera;
+                imagePicker.allowsEditing = false
+                
+                self.present(imagePicker, animated: true, completion: nil)
+            }
+    }
 }

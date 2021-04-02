@@ -17,3 +17,5 @@ cython_headers/kivytest.h
 cython_headers/kivytest_.h
 *.zip
 imported_pys/kivytest.py
+.DS_Store
+cython_headers/_appleapi.h
