@@ -25,8 +25,8 @@ elif [ $command_var == "w" ]; then
     pip install kivy-ios
     pip install astor
 
-    #rsync -av --delete --exclude '.git' /Users/macdaw/kivyios_swift/PythonSwiftLink/* ./PythonSwiftLink
-    git clone https://github.com/psychowasp/PythonSwiftLink
+    rsync -av --delete --exclude '.git' /Users/macdaw/kivyios_swift/PythonSwiftLink/* ./PythonSwiftLink
+    #git clone https://github.com/psychowasp/PythonSwiftLink
     #cp /Users/macdaw/kivyios_swift/PythonSwiftLink ./
     cp ./PythonSwiftLink/main.py ./wrapper_tool.py
     cp ./PythonSwiftLink/wrapper_tool.sh ./wrapper_tool.sh
