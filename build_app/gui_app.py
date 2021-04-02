@@ -29,8 +29,8 @@ from pygments.lexers.objective import ObjectiveCLexer
 from pygments.lexers import CythonLexer
 
 from filecmp import cmp,cmpfiles
-from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler
+# from watchdog.observers import Observer
+# from watchdog.events import FileSystemEventHandler
 
 from pbxproj import XcodeProject,PBXKey
 from pbxproj.pbxextensions.ProjectFiles import FileOptions
@@ -198,22 +198,22 @@ print(dirname(__file__))
 toolchain = "toolchain"
 root_path = os.path.dirname(sys.argv[0])
 
-class EventHandler(FileSystemEventHandler):
-    app = None
-    def __init__(self,app, **kwargs):
-        super(EventHandler,self).__init__(**kwargs)
-        self.app = app
+# class EventHandler(FileSystemEventHandler):
+#     app = None
+#     def __init__(self,app, **kwargs):
+#         super(EventHandler,self).__init__(**kwargs)
+#         self.app = app
 
-    def on_any_event(self, event):
-        app:KivySwiftLink = self.app
-        #event.is
-        file_str = event.src_path
-        filetype = file_str.split('.')
-        if filetype[-1] == 'py':
-            #src = path + event.src_path
+#     def on_any_event(self, event):
+#         app:KivySwiftLink = self.app
+#         #event.is
+#         file_str = event.src_path
+#         filetype = file_str.split('.')
+#         if filetype[-1] == 'py':
+#             #src = path + event.src_path
             
-            print (event.src_path)
-            app.build_wdog_event(event.src_path)
+#             print (event.src_path)
+#             app.build_wdog_event(event.src_path)
 
 
 
@@ -289,21 +289,21 @@ class KivySwiftLink(App):
             project.save()
         print(header_classes)
 
-    def build_wdog_event(self,filename):
-        p_build = PythonCallBuilder(self.app_dir)
+    # def build_wdog_event(self,filename):
+    #     p_build = PythonCallBuilder(self.app_dir)
         
-        p_build.build_py_files(filename)
-        calltitle = p_build.get_calltitle()
+    #     p_build.build_py_files(filename)
+    #     calltitle = p_build.get_calltitle()
 
-        pack_all("master.zip",calltitle)
-        thread = Thread(target=self.compiler,args=[calltitle])
-        thread.start()
+    #     pack_all("master.zip",calltitle)
+    #     thread = Thread(target=self.compiler,args=[calltitle])
+    #     thread.start()
 
-    def wdog_thread(self):
-        event_handler = EventHandler(self)
-        observer = Observer()
-        observer.schedule(event_handler, join(self.root_path,"imported_pys"), recursive=True,)
-        observer.start()
+    # def wdog_thread(self):
+    #     event_handler = EventHandler(self)
+    #     observer = Observer()
+    #     observer.schedule(event_handler, join(self.root_path,"imported_pys"), recursive=True,)
+    #     observer.start()
 
     def compile_selected(self,btn):
         self.build_log.text = "Compiling:\n"
