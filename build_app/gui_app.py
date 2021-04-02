@@ -269,6 +269,7 @@ class KivySwiftLink(App):
         self.update_header_group("kivy_example2")
 
         self.show_builds()
+        print("show_builds")
         #
     
     def update_header_group(self,name):
