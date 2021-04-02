@@ -267,6 +267,8 @@ class KivySwiftLink(App):
         #shutil.copy(py_file, )
         pack_all(self.app_dir,"master.zip",calltitle)
         self.update_header_group("kivy_example2")
+
+        self.show_builds()
         #
     
     def update_header_group(self,name):
