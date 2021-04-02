@@ -1,15 +1,16 @@
 #!/bin/bash
 # Ask the user for login details
-echo """
-Options:
-#################################
-w   -   create working folder and run setup
-p   -   create project
-x   -   exit
-"""
+
 INPUT_STRING=none
 while [ "$INPUT_STRING" != "x" ]
 do
+    echo """
+    Options:
+    #################################
+    w   -   create working folder and run setup
+    p   -   create project
+    x   -   exit
+    """
     read -p 'command: ' INPUT_STRING
     if [ $INPUT_STRING == "p" ]
         then
