@@ -19,3 +19,4 @@ cython_headers/kivytest_.h
 imported_pys/kivytest.py
 .DS_Store
 cython_headers/_appleapi.h
+.DS_Store
