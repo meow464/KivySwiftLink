@@ -14,25 +14,22 @@ x   -   exit
 #############################################
 """
 
-read -p 'command: ' INPUT_STRING
-if [ $INPUT_STRING == "p" ]
-then
+read -p "command: " INPUT_STRING
+if [ $INPUT_STRING == "p" ]; then
     echo
-elif [ $INPUT_STRING == "r" ]
-then
+elif [ $INPUT_STRING == "r" ]; then
     ""
     # cd $folder_var
     # . venv/bin/activate
     # python wrapper_tool.py
     # cd ..
-elif [ $INPUT_STRING == "w" ]
-then
+elif [ $INPUT_STRING == "w" ]; then
     echo "type folder name - default is:"
     echo
     echo "  kivyswift"
     echo
     read -p 'Folder name: ' folder_var
-    if [ $folder_var = ""] ; then
+    if [ $folder_var = ""]; then
         folder_var=kivyswift
     fi
     echo
@@ -48,7 +45,7 @@ then
     pip install kivy-ios
     pip install astor
 
-#        rsync -av --delete --exclude '.git' /Users/macdaw/kivyios_swift/PythonSwiftLink/* ./PythonSwiftLink
+    #        rsync -av --delete --exclude '.git' /Users/macdaw/kivyios_swift/PythonSwiftLink/* ./PythonSwiftLink
     git clone https://github.com/psychowasp/PythonSwiftLink
     #cp /Users/macdaw/kivyios_swift/PythonSwiftLink ./
     cp ./PythonSwiftLink/main.py ./wrapper_tool.py
