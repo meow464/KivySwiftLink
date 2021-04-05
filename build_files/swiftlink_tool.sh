@@ -14,9 +14,8 @@ folder_var=kivyswift
     #############################################
     """
     read -p 'command: ' INPUT_STRING
-    if [ $INPUT_STRING == "p" ]
-        then
-            echo "Not working yet :-P"
+    if [ $INPUT_STRING == "p" ]; then
+        echo "Not working yet :-P"
     elif [ $INPUT_STRING == "r" ]; then
         ""
         # cd $folder_var
