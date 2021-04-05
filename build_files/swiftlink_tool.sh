@@ -16,7 +16,7 @@ x   -   exit
 
 read -p "command: " INPUT_STRING
 if [ $INPUT_STRING == "p" ]; then
-    echo
+    echo "nothing"
 elif [ $INPUT_STRING == "r" ]; then
     ""
     # cd $folder_var
