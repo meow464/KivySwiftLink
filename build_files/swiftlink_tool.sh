@@ -13,6 +13,7 @@ w   -   create working folder and run setup
 x   -   exit
 #############################################
 """
+
 read -p 'command: ' INPUT_STRING
 if [ $INPUT_STRING == "p" ]
 then
@@ -35,7 +36,7 @@ then
         folder_var=kivyswift
     fi
     echo
-    echo Creating Dir $folder_var 
+    echo Creating Dir $folder_var
     mkdir ./$folder_var
     cd $folder_var
     echo $(dirname $0)
@@ -62,7 +63,7 @@ then
     cd $BASEDIR
     # read -p 'Project name: ' pro_var
 
-    #toolchain create $pro_var 
+    #toolchain create $pro_var
 else
     echo "no option selected"
 fi
