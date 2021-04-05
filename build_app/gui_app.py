@@ -1,4 +1,7 @@
+from logging import root
+from re import search
 from kivy.app import App
+from kivy.storage import jsonstore
 from kivy.uix.widget import Widget
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.gridlayout import GridLayout
@@ -12,13 +15,18 @@ from kivy.uix.codeinput import CodeInput
 from kivy.uix.modalview import ModalView
 from kivy.uix.textinput import TextInput
 from kivy.uix.screenmanager import Screen,ScreenManager
-import configparser
+from kivy.storage.dictstore import DictStore
+from kivy.storage.jsonstore import JsonStore
+from kivy.config import ConfigParser
+from kivy.uix.settings import Settings
+from kivy.uix.settings import SettingsWithTabbedPanel
+
 from kivy.clock import Clock, mainthread
 import json
 
 import sys
 import os
-from os.path import join,dirname
+from os.path import getmtime, isdir, join,dirname
 import subprocess
 import shutil
 from PythonSwiftLink.pythoncall_builder import PythonCallBuilder
@@ -41,6 +49,78 @@ Window.left = 0
 
 dir_path = dirname(__file__)
 
+
+Builder.load_string("""
+<ProjectBuilder>:
+    orientation: 'vertical'
+    BoxLayout:
+        size_hint_y: None
+        height: 48
+        Button:
+            text: "step0"
+            on_release:
+                project_screen.current = "step0"
+        Button:
+            text: "step1"
+            on_release:
+                project_screen.current = "step1"
+        Button:
+            text: "step2"
+            on_release:
+                project_screen.current = "step2"
+        Button:
+            text: "step3"
+            on_release:
+                project_screen.current = "step3"
+        Button:
+            text: "step4"
+            on_release:
+                project_screen.current = "step4"
+        Button:
+            text: "step5"
+            on_release:
+                project_screen.current = "step5"
+        Button:
+            text: "step6"
+            on_release:
+                project_screen.current = "step6"
+        
+            
+    ScreenManager:
+        id: project_screen
+        Screen:
+            name: "step0"
+            FloatLayout:
+                BoxLayout:
+                    pos_hint: {'center_x': 0.5 , 'center_y': 0.5}
+                    size_hint: 0.4, 0.3
+                    Label:
+                        text: "Add standard files"
+                    Button:
+                        on_release:
+                            app.update_classes_group()
+
+                Button:
+                    size_hint: None,None
+                    pos_hint: {'right': 1, 'y': 0}
+            
+        Screen:
+            name: "step1"
+        Screen:
+            name: "step2"
+        Screen:
+            name: "step3"
+        Screen:
+            name: "step4"
+        Screen:
+            name: "step5"
+        Screen:
+            name: "step6"
+""")
+
+class ProjectBuilder(BoxLayout):
+    pass
+
 Builder.load_string("""
 <MainWindow>:
     orientation: 'vertical'
@@ -52,9 +132,13 @@ Builder.load_string("""
             on_release:
                 screens.current = "screen0"
         Button:
-            text: "Py Files Compiler"
+            text: "Settings"
             on_release:
                 screens.current = "screen1"
+        Button:
+            text: "Settings2"
+            on_release:
+                screens.current = "screen2"
     ScreenManager:
         id: screens
         Screen:
@@ -115,11 +199,16 @@ Builder.load_string("""
                     id: codeviews
         Screen:
             name: "screen1"
+            ProjectBuilder:
+
+        Screen:
+            name: "screen2"
             BoxLayout:
-                Label:
-                    text: "test"
+                id: settings_box
 
 """)
+
+
 
 class MainWindow(BoxLayout):
     pass
@@ -162,6 +251,7 @@ Builder.load_string("""
         Label:
             id:label
         Button:
+        
             text: "Save"
             size_hint_x: None
             width: 48
@@ -237,14 +327,40 @@ class KivySwiftLink(App):
         self.root_path = root_path
         self.app_dir = join(root_path,"PythonSwiftLink")
         print(root_path)
-        config_str = ""
-        with open(join(self.app_dir,"config.json"),"r") as f:
-            config_str = f.read()
-        config = json.loads(config_str)
+        # config_str = ""
+        # with open(join(self.app_dir,"config.json"),"r") as f:
+        #     config_str = f.read()
+        # config = json.loads(config_str)
         # self.kivy_folder = config['kivy_ios_folder']
         self.kivy_folder = root_path
         #self.kivy_recipes = config['kivy_ios_recipes']
         self.kivy_recipes = join(root_path,"venv/lib/python3.8/site-packages/kivy_ios/recipes")
+        # global _json
+        # global _json_store
+        # _json_store = JsonStore(join(root_path,"build_config.json"))
+        # _json = {**_json_store}
+        
+        
+        # if "build_info" in _json:
+        #     self.build_info = _json.get("build_info")
+        # else:
+        #     self.build_info = {}
+        #     _json_store["build_info"] = self.build_info
+        # self.test_dict = {}
+
+        # if "builds" not in _json_store["build_info"]:
+        #     _json_store["build_info"]["builds"] = {}
+        # if "project_target" in _json_store["build_info"]:
+
+        #     self.project_target = _json_store["build_info"]["project_target"]
+        # else:
+        #     self.project_target = None
+        self.project_target = None
+        # self.test_dict["test2"] = {}
+        # _json_store["test2"] = self.test_dict
+        #self.build_info["root_path"] = root_path
+        #self.storage["build_info"] = self.build_info
+        #print(self.storage.__dict__)
     #"/Users/macdaw/kivyios_swift/venv/lib/python3.8/site-packages/kivy_ios/recipes"
     def build_selected(self,py_sel):
         p_build = PythonCallBuilder(self.app_dir)
@@ -266,31 +382,128 @@ class KivySwiftLink(App):
         
         #shutil.copy(py_file, )
         pack_all(self.app_dir,"master.zip",calltitle)
-        self.update_header_group("kivy_example2")
-
+        file_time = getmtime(join(self.app_dir,"cython_headers","_%s.h" % calltitle))
+        self.update_header_group()
+        
         self.show_builds()
         print("show_builds")
         #
-    
-    def update_header_group(self,name):
-        path = join(self.root_path, "%s-ios/%s.xcodeproj/project.pbxproj" % (name, name))
-        project = XcodeProject.load(path)
-        header_classes = project.get_or_create_group("Headers")
-        #print(header_classes.children[0]._get_comment())
-        header_list = set([child._get_comment() for child in header_classes.children])
-        header_dir = join(self.app_dir,"cython_headers")
-        print(header_dir)
-        project_updated = False
-        for (dirpath, dirnames, filenames) in os.walk(header_dir):
-            for file in filenames:
-                _file = join(header_dir,file)
-                if file not in header_list:
-                    project.add_file(_file, parent=header_classes)
+    # def set_project_folder(self,paths):
+    #     d = _json_store["build_info"]
+    #     try:
+    #         print(paths)
+    #         path = paths[0]
+    #         print(path,isdir(path))
+    #         if isdir(path):
+    #             d["project_target"] = path
+    #             self.project_target = path
+    #         _json_store["build_info"] = d
+    #     except:
+    #         print("Setproject error")
+
+    #remember
+    # def update_build_dict(self,file):
+    #     d = _json_store["build_info"]
+    #     builds = d["builds"]
+    #     if file in builds:
+    #         pass
+    #     else:
+    #         header = "_%s.h" % file
+    #         hpath = join(self.app_dir,"cython_headers",header)
+    #         builds[file] = {
+    #             "header": header,
+    #             "path": hpath,
+    #             "source_time": getmtime(hpath),
+    #             "build_time": getmtime(hpath)
+    #         }
+    #     print(d)
+    #     _json_store["build_info"] = d
+
+    def update_classes_group(self):
+        if self.project_target:
+            target = self.project_target
+            target_name = os.path.basename(target)[:-4]
+            print("target_name: ",target_name)
+            path = "%s/%s.xcodeproj/project.pbxproj" % (target, target_name)
+            project = XcodeProject.load(path)
+            project.remove_group_by_name("Classes",)
+            classes = project.get_or_create_group("Classes")
+            classes_list = set([child._get_comment() for child in classes.children])
+            
+            for item in ("runMain.h","runMain.m"):
+                if item not in classes_list and item != ".DS_Store":
+                    project.add_file(join(self.app_dir,item), parent=classes)
                     project_updated = True
-        if project_updated:
-            project.backup()
-            project.save()
-        print(header_classes)
+
+            sources = project.get_or_create_group("Sources")
+            sources_list = set([child._get_comment() for child in sources.children])
+            print("sources_list",sources_list)
+            if os.path.exists(join(self.project_target,"main.m")):
+                os.remove(join(self.project_target,"main.m"))
+            if "main.m" in sources_list:
+                for src in sources.children:
+                    if src._get_comment() == "main.m":
+                        sources.children.remove(src)
+                        break
+            for (dirpath, dirnames, filenames) in os.walk(join(self.app_dir, "project_build_files")):
+                for item in filenames:
+                    if item not in sources_list and item != ".DS_Store":
+                        dst = join(self.project_target,item)
+                        shutil.copy(join(dirpath,item),dst)
+                        print(dirpath,item)
+                        project.add_file(dst, parent=sources)
+                        project_updated = True
+            pro_file = ""
+            with open(path, "r") as f:
+                pro_file = f.read()
+            update_bridge = False
+            pro_lines = pro_file.splitlines()
+            for i, line in enumerate(pro_lines):
+                if search("SWIFT_OBJC_BRIDGING_HEADER",line):
+                    print(line,line.count("\t"))
+                    if not search(".*\$\{PRODUCT_NAME\}-Bridging-Header.h",line):
+                        print("editing line")
+                        string = "".join(["\t" * line.count("\t"), "SWIFT_OBJC_BRIDGING_HEADER = \"${PRODUCT_NAME}-Bridging-Header.h\";"] )
+                        print(string)
+                        pro_lines[i] = string
+                        update_bridge = True
+            for i, line in enumerate(pro_lines):
+                if search("SWIFT_OBJC_BRIDGING_HEADER",line):
+                    print(line,line.count("\t"))
+            
+                # SWIFT_OBJC_BRIDGING_HEADER = "";
+            if project_updated:
+                project.backup()
+                project.save()
+
+            if update_bridge:
+                project.backup()
+                with open(path, "w") as f:
+                    f.write("\n".join(pro_lines))
+    
+    def update_header_group(self):
+        if self.project_target:
+            target = self.project_target
+            target_name = os.path.basename(target)[:-4]
+            print("target_name: ",target_name)
+            path = "%s/%s.xcodeproj/project.pbxproj" % (target, target_name)
+            project = XcodeProject.load(path)
+            header_classes = project.get_or_create_group("Headers")
+            #print(header_classes.children[0]._get_comment())
+            header_list = set([child._get_comment() for child in header_classes.children])
+            header_dir = join(self.app_dir,"cython_headers")
+            print(header_dir)
+            project_updated = False
+            for (dirpath, dirnames, filenames) in os.walk(header_dir):
+                for file in filenames:
+                    _file = join(header_dir,file)
+                    if file not in header_list and file != ".DS_Store":
+                        project.add_file(_file, parent=header_classes)
+                        project_updated = True
+            if project_updated:
+                project.backup()
+                project.save()
+            print(header_classes)
 
     # def build_wdog_event(self,filename):
     #     p_build = PythonCallBuilder(self.app_dir)
@@ -388,6 +601,7 @@ class KivySwiftLink(App):
 
     def compiler(self,calltitle):
         #build_file = join(root_path,"builds",calltitle,"module_name.json")
+
         build_file = join(self.app_dir,"builds",calltitle.lower(),"kivy_recipe.py")
 
         target_path = join(self.kivy_recipes,calltitle)
@@ -410,6 +624,12 @@ class KivySwiftLink(App):
         self.execute(command)
         command = " ".join([toolchain, "build", calltitle])  # the shell command
         self.execute(command)
+        if self.project_target:
+            command = " ".join([toolchain, "update", self.project_target])  # the shell command
+            self.execute(command)
+        #remember
+        #self.update_build_dict(calltitle.lower())
+
         # command = " ".join(['python3.7',toolchain, "clean", calltitle])  # the shell command
         # self.execute(command)
         # command = " ".join(['python3.7',toolchain, "build", calltitle])  # the shell command
@@ -496,8 +716,30 @@ class KivySwiftLink(App):
         self.build_popup = ModalView()
         self.build_popup.size_hint = (0.8,0.8)
         self.build_popup.add_widget(self.build_log)
+        from kivy.config import ConfigParser
 
+        config = ConfigParser()
+        config.read('myconfig.ini')
+        config.setdefaults('BuildInfo', {'text': 'Hello', 'font_size': 20, 'project_target':None})
+        self.conf = config
+        if config["BuildInfo"]["project_target"] == "":
+            self.project_target = None
+        else:
+            self.project_target = config["BuildInfo"]["project_target"]
+        #self.settings_cls = SettingsWithTabbedPanel
+        s = Settings()
+        s.add_json_panel('BuildInfo', config, join(self.app_dir,'app_config.json'))
+        ids.settings_box.add_widget(s)
+        s.bind(on_config_change=print)
+        #s.add_json_panel('Another panel', config, 'settings_test2.json')
+        # if self.project_target:
+        #     ids.file_man.path = self.project_target
         return self.main
 
+    def on_config_change(self, config, section, key, value):
+        if section == "BuildInfo":
+            if key == "project_target":
+                self.project_target = value
 if __name__ == '__main__':
     KivySwiftLink().run()
+    #_json_store.update(_json)
