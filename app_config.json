@@ -1,19 +1,5 @@
 [
     {
-        "type": "string",
-        "title": "Label caption",
-        "desc": "Choose the text that appears in the label",
-        "section": "BuildInfo",
-        "key": "text"
-    },
-    {
-        "type": "numeric",
-        "title": "Label font size",
-        "desc": "Choose the font size the label",
-        "section": "BuildInfo",
-        "key": "font_size"
-    },
-    {
         "type": "path",
         "title": "Project target",
         "desc": "Choose the font size the label",

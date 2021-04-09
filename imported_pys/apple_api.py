@@ -18,3 +18,9 @@ class AppleApi:
     @callback
     def returned_path(path: str):
         pass
+
+    @callback
+    def returned_image_data(data: data):
+        """
+        print(arg0, arg0_size)
+        """

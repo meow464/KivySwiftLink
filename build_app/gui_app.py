@@ -40,6 +40,7 @@ from filecmp import cmp,cmpfiles
 # from watchdog.observers import Observer
 # from watchdog.events import FileSystemEventHandler
 
+
 from pbxproj import XcodeProject,PBXKey
 from pbxproj.pbxextensions.ProjectFiles import FileOptions
 
@@ -53,37 +54,37 @@ dir_path = dirname(__file__)
 Builder.load_string("""
 <ProjectBuilder>:
     orientation: 'vertical'
-    BoxLayout:
-        size_hint_y: None
-        height: 48
-        Button:
-            text: "step0"
-            on_release:
-                project_screen.current = "step0"
-        Button:
-            text: "step1"
-            on_release:
-                project_screen.current = "step1"
-        Button:
-            text: "step2"
-            on_release:
-                project_screen.current = "step2"
-        Button:
-            text: "step3"
-            on_release:
-                project_screen.current = "step3"
-        Button:
-            text: "step4"
-            on_release:
-                project_screen.current = "step4"
-        Button:
-            text: "step5"
-            on_release:
-                project_screen.current = "step5"
-        Button:
-            text: "step6"
-            on_release:
-                project_screen.current = "step6"
+    # BoxLayout:
+    #     size_hint_y: None
+    #     height: 48
+    #     Button:
+    #         text: "step0"
+    #         on_release:
+    #             project_screen.current = "step0"
+    #     Button:
+    #         text: "step1"
+    #         on_release:
+    #             project_screen.current = "step1"
+    #     Button:
+    #         text: "step2"
+    #         on_release:
+    #             project_screen.current = "step2"
+    #     Button:
+    #         text: "step3"
+    #         on_release:
+    #             project_screen.current = "step3"
+    #     Button:
+    #         text: "step4"
+    #         on_release:
+    #             project_screen.current = "step4"
+    #     Button:
+    #         text: "step5"
+    #         on_release:
+    #             project_screen.current = "step5"
+    #     Button:
+    #         text: "step6"
+    #         on_release:
+    #             project_screen.current = "step6"
         
             
     ScreenManager:
@@ -282,7 +283,7 @@ class CodeViews(BoxLayout):
     def __init__(self, **kwargs):
         super(CodeViews,self).__init__(**kwargs)
 
-print(dirname(__file__))
+print("file path",dirname(__file__))
 
 #toolchain = join(kivy_folder,"toolchain.py")
 toolchain = "toolchain"
@@ -326,7 +327,7 @@ class KivySwiftLink(App):
         #self.wdog_thread()
         self.root_path = root_path
         self.app_dir = join(root_path,"PythonSwiftLink")
-        print(root_path)
+        print("root path:",root_path)
         # config_str = ""
         # with open(join(self.app_dir,"config.json"),"r") as f:
         #     config_str = f.read()
@@ -369,7 +370,8 @@ class KivySwiftLink(App):
         py_file = os.path.join(self.app_dir,"imported_pys",py_sel.text)
         #print(os.path.join(self.app_dir,"imported_pys",py_sel.text))
         if py_sel.type == "imports":
-            cy_string,objc_h_script = p_build.build_py_files(os.path.join(self.app_dir,"imported_pys",py_sel.text))
+            #cy_string,objc_h_script = p_build.build_py_files(os.path.join(self.app_dir,"imported_pys",py_sel.text))
+            cy_string,objc_h_script = p_build.build_py_files(os.path.join(self.root_path,"wrapper_sources",py_sel.text))
             calltitle = p_build.get_calltitle()
             self.calltitle = calltitle
             self.view2.text = cy_string
@@ -381,7 +383,7 @@ class KivySwiftLink(App):
             self.calltitle = calltitle
         
         #shutil.copy(py_file, )
-        pack_all(self.app_dir,"master.zip",calltitle)
+        pack_all(self.root_path,self.app_dir,"master.zip",calltitle)
         file_time = getmtime(join(self.app_dir,"cython_headers","_%s.h" % calltitle))
         self.update_header_group()
         
@@ -450,7 +452,7 @@ class KivySwiftLink(App):
                     if item not in sources_list and item != ".DS_Store":
                         dst = join(self.project_target,item)
                         shutil.copy(join(dirpath,item),dst)
-                        print(dirpath,item)
+                        #print(dirpath,item)
                         project.add_file(dst, parent=sources)
                         project_updated = True
             pro_file = ""
@@ -460,16 +462,16 @@ class KivySwiftLink(App):
             pro_lines = pro_file.splitlines()
             for i, line in enumerate(pro_lines):
                 if search("SWIFT_OBJC_BRIDGING_HEADER",line):
-                    print(line,line.count("\t"))
+                    #print(line,line.count("\t"))
                     if not search(".*\$\{PRODUCT_NAME\}-Bridging-Header.h",line):
-                        print("editing line")
+                        #print("editing line")
                         string = "".join(["\t" * line.count("\t"), "SWIFT_OBJC_BRIDGING_HEADER = \"${PRODUCT_NAME}-Bridging-Header.h\";"] )
-                        print(string)
+                        #print(string)
                         pro_lines[i] = string
                         update_bridge = True
-            for i, line in enumerate(pro_lines):
-                if search("SWIFT_OBJC_BRIDGING_HEADER",line):
-                    print(line,line.count("\t"))
+            # for i, line in enumerate(pro_lines):
+            #     if search("SWIFT_OBJC_BRIDGING_HEADER",line):
+            #         print(line,line.count("\t"))
             
                 # SWIFT_OBJC_BRIDGING_HEADER = "";
             if project_updated:
@@ -485,14 +487,14 @@ class KivySwiftLink(App):
         if self.project_target:
             target = self.project_target
             target_name = os.path.basename(target)[:-4]
-            print("target_name: ",target_name)
+            #print("target_name: ",target_name)
             path = "%s/%s.xcodeproj/project.pbxproj" % (target, target_name)
             project = XcodeProject.load(path)
             header_classes = project.get_or_create_group("Headers")
             #print(header_classes.children[0]._get_comment())
             header_list = set([child._get_comment() for child in header_classes.children])
             header_dir = join(self.app_dir,"cython_headers")
-            print(header_dir)
+            #print(header_dir)
             project_updated = False
             for (dirpath, dirnames, filenames) in os.walk(header_dir):
                 for file in filenames:
@@ -503,7 +505,7 @@ class KivySwiftLink(App):
             if project_updated:
                 project.backup()
                 project.save()
-            print(header_classes)
+            #print(header_classes)
 
     # def build_wdog_event(self,filename):
     #     p_build = PythonCallBuilder(self.app_dir)
@@ -531,7 +533,9 @@ class KivySwiftLink(App):
     def show_imports(self):
         imports:GridLayout = self.imports
         imports.clear_widgets()
-        for item in os.listdir(join(self.app_dir,"imported_pys")):
+        #import_dir = join(self.app_dir,"imported_pys")
+        import_dir = join(self.root_path,"wrapper_sources")
+        for item in os.listdir(import_dir):
             if item.endswith("py"):
                 t = ToggleButton(
                     text= item,
@@ -550,7 +554,7 @@ class KivySwiftLink(App):
         builds.clear_widgets()
         
         for item in os.listdir(join(self.app_dir,"builds")):
-            print(item)
+            #print(item)
             try:
                 if os.path.isdir(join(self.app_dir,"builds",item)):
                     if os.path.exists(join(self.app_dir,"builds",item,"module.ini")):
@@ -581,7 +585,8 @@ class KivySwiftLink(App):
         if btn.state is 'normal':
             btn.state = 'down'
             print(btn.text)
-        path = join(self.app_dir,"imported_pys",btn.text)
+        #path = join(self.app_dir,"imported_pys",btn.text)
+        path = join(self.root_path,"wrapper_sources",btn.text)
         #if btn.state is 'down':
         self.selected_py = btn
         if btn.type == "imports":
@@ -720,7 +725,7 @@ class KivySwiftLink(App):
 
         config = ConfigParser()
         config.read('myconfig.ini')
-        config.setdefaults('BuildInfo', {'text': 'Hello', 'font_size': 20, 'project_target':None})
+        config.setdefaults('BuildInfo', { 'project_target':None})
         self.conf = config
         if config["BuildInfo"]["project_target"] == "":
             self.project_target = None

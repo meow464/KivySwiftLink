@@ -89,12 +89,13 @@ def create_temp_copy_files(app_dir,src,dst,key):
         configfile.close()
 
 
-def pack_all(app_dir,src,dst):
+def pack_all(root_dir, app_dir, src, dst):
     clear_temp(app_dir)
     create_temp_copy_files(app_dir,join(app_dir,"builds"),join(app_dir,"tmp"),dst.lower())
     builds = join(app_dir,"tmp")
     sources = []
-    exports_path = join(app_dir,"Exports")
+    exports_path = join(root_path,"wrapper_builds")
+    #exports_path = join(app_dir,"Exports")
     if not os.path.exists(exports_path):
         os.makedirs(exports_path)
     if not os.path.exists(join(exports_path,dst) ):

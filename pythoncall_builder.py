@@ -57,6 +57,8 @@ ctypedef_types_dict = {
     "json": "const char*",
     "bytes": "const char*",
 
+    "data": "const unsigned char*",
+
     "bool": "bool_t",
 
     "PythonCallback": "PythonCallback"
@@ -88,6 +90,7 @@ typedef_types_dict = {
     "object": "const void* _Nonnull",
     "json": "const char* _Nonnull",
     "bytes": "const char*  _Nonnull",
+    "data": "const unsigned char* _Nonnull",
     "short": "const short*  _Nonnull",
     "bool": "BOOL",
 
@@ -120,6 +123,7 @@ python_types_dict = {
     "object": "object",
     "json" : "object",
     "bytes": "bytes",
+    "data": "bytes",
     "short": "int",
 
     "PythonCallback": "PythonCallback"
@@ -160,6 +164,7 @@ call_args_dict = {
     "object": "<object>{arg}",
     "json": "json.loads({arg})",
     "bytes": "{arg}",
+    "data": "<bytes>{arg}[0:{arg}_size]",
 
     "PythonCallback": "PythonCallback"
 }
@@ -171,6 +176,8 @@ call_list_dict = {
     "int": "[{arg}[x] for x in range({arg}_size)]",
     "long": "[{arg}[x] for x in range({arg}_size)]",
     "uint8": "{arg}[:{arg}_size]",
+    "bytes": "{arg}",
+    "data": "{arg}[:{arg}_size]",
     "float": "[{arg}[x] for x in range({arg}_size)]",
     "double": "[{arg}[x] for x in range({arg}_size)]",
     "str": "[{arg}[x].decode('utf8') for x in range({arg}_size)]",
@@ -390,6 +397,7 @@ class Arg():
     is_list: bool
     is_counter: bool
     is_json: bool
+    is_data: bool
     counter_name: str
     list_type: str
 
@@ -405,6 +413,7 @@ class Arg():
         self.is_list = False
         self.is_counter = False
         self.is_json = False
+        self.is_data = False
         self.counter_name = ""
         self.list_type = ""
 
@@ -637,8 +646,8 @@ class PythonCallBuilder():
 
                                 func_arg.python_name = _arg.arg
                                 func_arg.cy_name = _arg.arg
-
-                                if not isinstance(_arg.annotation,ast.List):
+                                
+                                if not isinstance(_arg.annotation,(ast.List,ast.Bytes)):
                                     #print("not list",_arg.__dict__)
                                     
                                     # if isinstance(_arg.annotation, ast.Subscript):
@@ -664,6 +673,26 @@ class PythonCallBuilder():
                                     temp.python_args.append(python_types_dict[arg_type])
                                     if arg_type == "json":
                                         func_arg.is_json = True
+
+                                    if arg_type == "data":
+                                        func_arg.is_data = True
+                                        list_counter = Arg()
+                                        temp.args_.append(list_counter)
+                                        list_counter.is_counter = True
+
+                                        list_counter.cy_type = "long"
+                                        list_counter.cy_name = "%s_size" % _arg.arg
+                                        list_counter.python_name = "%s_size" % _arg.arg
+                                        list_counter.objc_type = "long"
+                                        list_counter.objc_name = "arg%d_size" % i
+                        
+                                    if _dec == 'callback':
+                                        
+                                        func_arg_list.append("arg%d_size" % i)
+                                        temp.args.append("arg%d_size" % i)
+                                        temp.arg_names.append("%s_size" % _arg.arg)
+                                        func_arg_list.append("long")
+                                        temp.arg_types.append("long")
                                 else:
                                     #### Call (list type)####
                                     #print("is list:", _arg.annotation.__dict__)
@@ -1109,6 +1138,7 @@ class PythonCallBuilder():
 
     def gen_cython_callbacks(self, pointers:list):
         cy_functions = []
+        func: Function
         for i,func in enumerate(pointers):
             _title = func.name
             #args = func.real_args
@@ -1121,6 +1151,7 @@ class PythonCallBuilder():
                 _types.append(arg.cy_type)
                 _types.append(arg.objc_name)
                 args2.append(arg.cy_name)
+                print(func.name,"callback arg",arg.__dict__)
             # for types in func.real_args2:
             #     _types = []
             #     for i,_type in enumerate(types):
@@ -1145,6 +1176,8 @@ class PythonCallBuilder():
                             if call_arg.is_json:
                                 #print("json arg:",call_arg.python_name)
                                 arg_name = call_args_dict["json"].format(arg=call_arg.objc_name)
+                            elif call_arg.is_data:
+                                arg_name = call_args_dict["data"].format(arg=call_arg.objc_name)
                             else:
                                 arg_name = call_args_dict[call_arg.python_type].format(arg=call_arg.objc_name)
                             call_args.append(arg_name)
