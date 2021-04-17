@@ -1433,7 +1433,8 @@ class PythonCallBuilder():
             #"module_name_as_root" : True ,
 
             #"#PYTHONLINKROOT" : os.path.dirname(__file__)
-            "#PYTHONLINKROOT" : self.root_path
+            #"#PYTHONLINKROOT" : self.root_path
+            "#PYTHONLINKROOT" : "/"
 
         }
 

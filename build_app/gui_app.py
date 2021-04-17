@@ -963,7 +963,9 @@ class KivySwiftLink(App):
 
         build_file = join(self.app_dir,"builds",calltitle.lower(),"kivy_recipe.py")
         build_file_exist = os.path.exists( build_file )
-        target_path = join(self.kivy_recipes,calltitle)
+        #target_path = join(self.kivy_recipes,calltitle)
+        
+        target_path = join(self.root_path,"wrapper_builds",calltitle)
         if not os.path.exists( target_path ):
             os.makedirs(target_path)
         recipe_path = join(target_path,"__init__.py")
@@ -987,7 +989,8 @@ class KivySwiftLink(App):
         command = " ".join([toolchain, "clean", calltitle])  # the shell command
         self.execute(command,2,True)
         self.update_log("Building....\n")
-        command = " ".join([toolchain, "build", calltitle])  # the shell command
+        # command = " ".join([toolchain, "build", calltitle])  # the shell command
+        command = " ".join([toolchain, "build", calltitle,"--add-custom-recipe", target_path])  # the shell command
         self.execute(command,1, True,True)
         #self.update_log("Building....")
         if self.project_target:
