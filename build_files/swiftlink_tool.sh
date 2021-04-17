@@ -15,23 +15,29 @@ x   -   exit
 """
 
 read -p "command: " INPUT_STRING
-if [ "$INPUT_STRING" = "p" ]      ; then
+if [ "$INPUT_STRING" = "p" ]
+then
     echo "nothing"
-elif [ "$INPUT_STRING" = "r" ]    ; then
+elif [ "$INPUT_STRING" = "r" ]
+then
     ""
     # cd $folder_var
     # . venv/bin/activate
     # python wrapper_tool.py
     # cd ..
-elif [ $INPUT_STRING = "w" ]    ; then
+elif [ $INPUT_STRING = "w" ]
+then
     echo "type folder name - default is:"
     echo
     echo "  kivyswift"
     echo
     read -p 'Folder name: ' folder_var
-    if [ $folder_var = ""]      ; then
+    if [ $folder_var = ""]
+    then
         folder_var=kivyswift
     fi
+    
+    
     echo
     echo Creating Dir $folder_var
     mkdir ./$folder_var
