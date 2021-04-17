@@ -14,7 +14,7 @@ pythonlinkroot = #PYTHONLINKROOT
 module_folder = #MODULE_FOLDER
 class #RECIPENAME_Recipe(CythonRecipe):
     version = "master"
-    url = 'file://' + urllib.parse.quote(join(pythonlinkroot,"wrapper_builds",module_name,"master.zip"))
+    url = 'file:./' + urllib.parse.quote(join("wrapper_builds",module_name,"master.zip"))
     library = "Temp.a"
     depends = ["python3", "hostpython3"]
     pre_build_ext = True

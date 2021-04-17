@@ -39,10 +39,13 @@ elif [ "$INPUT_STRING" = "w" ]; then
 
     python3.8 -m venv venv
     . venv/bin/activate
-    pip install cython
+        pip install cython
     pip install kivy
     pip install kivy-ios
     pip install astor
+    pip install tinydb
+    pip install applescript
+    pip install watchdog
 
     #        rsync -av --delete --exclude '.git' /Users/macdaw/kivyios_swift/PythonSwiftLink/* ./PythonSwiftLink
     git clone https://github.com/psychowasp/PythonSwiftLink
@@ -51,7 +54,9 @@ elif [ "$INPUT_STRING" = "w" ]; then
 
     chmod +x wrapper_tool.sh
     toolchain build kivy
-
+    mkdir wrapper_sources
+    mkdir wrapper_builds
+    
     echo
     echo "Working folder <$folder_var> is now ready"
     echo
