@@ -15,7 +15,6 @@ def zipdir(path,src, ziph):
     for root, dirs, files in os.walk(path):
         for file in files:
             if file != ".DS_Store":
-                #print(root)
                 #ziph.write(os.path.join(root, file),root)
                 ziph.write(os.path.join(root, file), arcname=os.path.join(root.replace(path, "files"), file))
                 _file,ext = file.split(".")

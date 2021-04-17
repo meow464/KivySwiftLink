@@ -61,7 +61,7 @@ class CythonExtension(Extension):
 def get_extensions_from_sources(sources):
     _ext_modules = []
     for pyx, flags in sources.items():
-        module_name = flags['module_name']
+        module_name = flags.pop('module_name')
         pyx = expand(src_path,pyx)
         depends = [expand(src_path, x) for x in flags.pop('depends', [])]
         f_depends = [x for x in depends if x.rsplit('.', 1)[-1] in ('m')]
@@ -113,7 +113,7 @@ for key,_file in file_list:
 ext_modules.extend(get_extensions_from_sources(sources))
 
 setup(
-      name='RealmDatabase',
+      name='PythonSwiftLink',
       version='0.1',
       description="A Cython wrapper for Objc/Swift",
       classifiers=[
@@ -122,11 +122,11 @@ setup(
                    'Natural Language :: English',
                    'Operating System :: iOS',
                    'Programming Language :: Cython / Objective-C / Swift',
-                   'Programming Language :: Python :: 3.7',
+                   'Programming Language :: Python :: 3.8',
                    'Topic :: Payment Processing',
                    ],
       keywords=['PythonSwiftLink'],
-      author='GoBig87 / PsycHoWasP',
+      author='PsycHoWasP / GoBig87 ',
       author_email='add_later@add)later.com',
       url='',
       license='BSD',

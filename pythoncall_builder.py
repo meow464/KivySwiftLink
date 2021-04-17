@@ -13,6 +13,7 @@ import json
 from os.path import join
 import shutil
 
+from typing import List
 
 
 
@@ -25,30 +26,7 @@ cstruct_list: list
 calltitle = None 
 
 
-func_pointer_string = """\
-ctypedef void (*{title})({args})
-"""
-
-func_pointer_string2 = """\
-ctypedef {returns} (*{title})({args})
-"""
-
-objc_func_pointer_string = """\
-typedef void (*{title})({args});
-"""
-
-objc_func_pointer_string2 = """\
-typedef {returns} (*{title})({args});
-"""
-
 ctypedef_types_dict = {
-    "list(int)": "const int*",
-    "list(long)": "const long*",
-    "list(uint8)": "const unsigned char*",
-    "list(float)": "const float*",
-    "list(double)": "const double*",
-    "list(str)": "const char* const*",
-
     "str": "const char*",
     "int": "int",
     "float": "float",
@@ -76,12 +54,6 @@ ctypedef_list_dict = {
 }
 
 typedef_types_dict = {
-    "list(int)": "const int* _Nonnull",
-    "list(long)": "const long* _Nonnull",
-    "list(uint8)": "const unsigned char* _Nonnull",
-    "list(float)": "const float* _Nonnull",
-    "list(double)": "const double* _Nonnull",
-    "list(str)": "const char* _Nonnull const* _Nonnull",
 
     "str": "const char* _Nonnull",
     "int": "int",
@@ -98,6 +70,7 @@ typedef_types_dict = {
     "PythonCallback": "PythonCallback"
 }
 
+
 typedef_list_dict = {
     "int": "const int* _Nonnull",
     "long": "const long* _Nonnull",
@@ -109,12 +82,6 @@ typedef_list_dict = {
 }
 
 python_types_dict = {
-    "list(int)": "list",
-    "list(long)": "list",
-    "list(uint8)": "list",
-    "list(float)": "list",
-    "list(double)": "list",
-    "list(str)": "list",
 
     "str": "str",
     "int": "int",
@@ -130,13 +97,6 @@ python_types_dict = {
 }
 
 send_args_dict = {
-    "list(int)": "[{arg} for x in range({arg}_count)]",
-    "list(long)": "[{arg} for x in range({arg}_count)]",
-    "list(uint8)": "[{arg} for x in range({arg}_count)]",
-    "list(float)": "[{arg} for x in range({arg}_count)]",
-    "list(double)": "[{arg} for x in range({arg}_count)]",
-    "list(str)": "[{arg}.decode('utf8') for x in range({arg}_count)]",
-
     "str": "{arg}.encode('utf-8')",
     "int": "{arg}",
     "float": "{arg}",
@@ -150,13 +110,6 @@ send_args_dict = {
 }
 
 call_args_dict = {
-    "list(int)": "[{arg} for x in range({arg}_count)]",
-    "list(long)": "[{arg} for x in range({arg}_count)]",
-    "list(uint8)": "[{arg} for x in range({arg}_count)]",
-    "list(float)": "[{arg} for x in range({arg}_count)]",
-    "list(double)": "[{arg} for x in range({arg}_count)]",
-    "list(str)": "[{arg}.decode('utf8') for x in range({arg}_count)]",
-
     "str": "{arg}.decode('utf8')",
     "int": "{arg}",
     "float": "{arg}",
@@ -184,26 +137,78 @@ call_list_dict = {
     "PythonCallback": "PythonCallback"
 }
 arg_size_dict = {
-        "list(int)": 4,
-        "list(long)": 8,
-        "list(uint8)": 1,
-        "list(float)": 4,
-        "list(double)": 8,
-        "list(str)": 1,
-
         "str": 1,
+        "uint8": 1,
         "int": 4,
         "float": 4,
         "long": 8,
+        "double": 8,
         "short": 2,
     }
+
+ptr_type_dict = {
+        "str": "const char*",
+        "int": "int",
+        "float": "float",
+        "long": "long",
+        "double": "double",
+        "uint8": "unsigned char",
+        "short": "short"
+    }
+
+
+func_pointer_string = """\
+ctypedef void (*{title})({args})
+"""
+
+func_pointer_string2 = """\
+ctypedef {returns} (*{title})({args})
+"""
+
+objc_func_pointer_string = """\
+typedef void (*{title})({args});
+"""
+
+objc_func_pointer_string2 = """\
+typedef {returns} (*{title})({args});
+"""
+
+
+#def get_cython_class_string(_class_, call_var, )
+
 cython_class = """\
 cdef public void* {_class}_voidptr
 cdef class {_class}:
 \tdef __init__(self,object callback_class):
-\t\tglobal {call_var} 
+\t\tglobal {call_var}
 \t\t{call_var} = <const void*>callback_class
 \t\tprint("{call_var} init:", (<object>{call_var}))
+"""
+
+cython_class_dispatch = """\
+cdef public void* {_class}_voidptr
+cdef public void* {_class}_dispatch
+cdef public {_class} {_class}_shared
+cdef class {_class}(EventDispatcher):
+\t__events__ = {events}
+
+\t@staticmethod
+\tdef default(call: object):
+\t\tglobal {_class}_shared
+\t\tif {_class}_shared != None:
+\t\t\treturn {_class}_shared
+\t\telse:
+\t\t\t{_class}_shared = {_class}(call)
+\t\t\treturn {_class}_shared
+
+\tdef __init__(self,object callback_class):
+\t\tglobal {call_var}
+\t\tglobal {_class}_dispatch
+\t\t{_class}_dispatch = <const void*>self.dispatch
+\t\t{call_var} = <const void*>callback_class
+\t\tprint("{call_var} init:", (<object>{call_var}))
+
+
 """
 
 
@@ -231,14 +236,14 @@ class_cyfunc_send_plain = """\
 \t\t{call}
 """
 
-call_args_dict2 = {
-    "list(int)": "[{arg} for x in range({arg}_count)]",
-    "list(long)": "[{arg} for x in range({arg}_count)]",
-    "list(uint8)": "[{arg} for x in range({arg}_count)]",
-    "list(float)": "[{arg} for x in range({arg}_count)]",
-    "list(double)": "[{arg} for x in range({arg}_count)]",
-    "list(str)": "[{arg}.decode('utf8') for x in range({arg}_count)]",
 
+global_event_function = """\
+\tdef {title}(self,*largs,**kwargs):
+\t\tpass
+"""
+
+
+call_args_dict2 = {
     "str": "{arg}.decode('utf8')",
     "int": "{arg}",
     "float": "{arg}",
@@ -247,39 +252,9 @@ call_args_dict2 = {
     "PythonCallback": "PythonCallback"
 }
 
-arg_size_dict = {
-        "list(int)": 4,
-        "list(long)": 8,
-        "list(uint8)": 1,
-        "list(float)": 4,
-        "list(double)": 8,
-        "list(str)": 1,
 
-        "str": 1,
-        "uint8": 1,
-        "int": 4,
-        "float": 4,
-        "long": 8,
-        "double": 8,
-        "short": 2,
-    }
 
-ptr_type_dict = {
-        "list(int)": "int",
-        "list(long)": "long",
-        "list(uint8)": "unsigned char",
-        "list(float)": "float",
-        "list(double)": "double",
-        "list(str)": "const char*",
 
-        "str": "const char*",
-        "int": "int",
-        "float": "float",
-        "long": "long",
-        "double": "double",
-        "uint8": "unsigned char",
-        "short": "short"
-    }
 
 list_2_array =  """\
 \t\tcdef int {arg}_size = len({arg})
@@ -352,15 +327,17 @@ cdef {returns} cy_{title}({args}) with gil:
 
 """
 
+cython_global_dispatch = """\
+cdef {returns} cy_{title}({args}) with gil:
+\t{_class}{callback}
+"""
+
 cython_callback3 = """\
 cdef {returns} cy_{title}({args}) with gil:
 \t{code}
 \t(<object> {_class}).{call}{callback}
 
 """
-
-
-
 
 objc_structinit_string = """\
 typedef struct {title}Struct {call};
@@ -400,6 +377,8 @@ class Arg():
     is_data: bool
     counter_name: str
     list_type: str
+    custom_call: bool
+    call_code: str
 
     def __init__(self):
         self.python_type = ""
@@ -411,16 +390,91 @@ class Arg():
         self.call_name = ""
         self.return_name = ""
         self.is_list = False
+        self.is_tuple = False
         self.is_counter = False
         self.is_json = False
         self.is_data = False
+        self.custom_call = False
         self.counter_name = ""
         self.list_type = ""
+        self.call_code = ""
+    
+    @staticmethod
+    def generate_general_arg(_arg: ast.arg,_dec: str,func_arg_list: list, func,  i ):
+        
+        temp: Function = func
+        func_arg = Arg()
+        temp.args_.append(func_arg)
+        func_arg.objc_name = "arg%d" % i
+        func_arg.call_name = _arg.arg
+
+        func_arg.python_name = _arg.arg
+        func_arg.cy_name = _arg.arg
+        
+        if isinstance(_arg.annotation,(ast.List,ast.Bytes)):
+            arg_type = _arg.annotation.elts[0].id
+            func_arg.is_list = True
+            func_arg.python_type = "list"
+            func_arg.cy_type = ctypedef_list_dict[arg_type]
+            func_arg.list_type = arg_type
+
+            func_arg.objc_type = typedef_list_dict[arg_type]
+
+            list_counter = Arg()
+            temp.args_.append(list_counter)
+            list_counter.is_counter = True
+
+            list_counter.cy_type = "long"
+            list_counter.cy_name = "%s_size" % _arg.arg
+            list_counter.python_name = "%s_size" % _arg.arg
+            list_counter.objc_type = "long"
+            list_counter.objc_name = "arg%d_size" % i
+        else:
+
+            #print("not list",_arg.__dict__)
+            
+            # if isinstance(_arg.annotation, ast.Subscript):
+            #     #print(_arg.annotation.__dict__)
+            #     #print(_arg.annotation.slice.__dict__)
+            #     #print(_arg.annotation.value.__dict__)
+            #     arg_type = _arg.annotation.slice.value.id
+            #     _arg_id = _arg.arg
+
+            #else:
+            arg_type = _arg.annotation.id
+            #print("\t argtype:",arg_type)
+            func_arg.is_list = False
+            func_arg.python_type = python_types_dict[arg_type]
+            func_arg.cy_type = ctypedef_types_dict[arg_type]
+
+            func_arg.objc_type = typedef_types_dict[arg_type]
+
+            #func_arg_list.append(arg_type)
+            #func_arg_list.append(_arg.annotation.id)
+            temp.arg_types.append(arg_type)
+            #temp.arg_types.append(_arg.annotation.id)
+            temp.python_args.append(python_types_dict[arg_type])
+            if arg_type == "json":
+                func_arg.is_json = True
+
+            if arg_type == "data":
+                func_arg.is_data = True
+                list_counter = Arg()
+                temp.args_.append(list_counter)
+                list_counter.is_counter = True
+
+                list_counter.cy_type = "long"
+                list_counter.cy_name = "%s_size" % _arg.arg
+                list_counter.python_name = "%s_size" % _arg.arg
+                list_counter.objc_type = "long"
+                list_counter.objc_name = "arg%d_size" % i
+
+        return (func_arg, arg_type)
 
 
 class Function():
-    args_: list
-    args: list
+    args_: List[Arg]
+    args: List[ast.arg]
     args2: list
     arg_types: list
     arg_names: list
@@ -438,8 +492,8 @@ class Function():
     code: str
     call_class: str
     call_target: str
-
-
+    compare_string: str
+    global_dispatch: bool
 
     def __init__(self):
         self.args_ = []
@@ -460,11 +514,17 @@ class Function():
         self.code = ""
         self.call_class = calltitle + "_voidptr"
         self.call_target = ""
+        self.compare_string = ""
+        self.global_dispatch = False
 
 class PythonCallBuilder():
     app_dir: str
-    def __init__(self,app_dir):
+    root_path: str
+    dispatch_mode: bool
+    def __init__(self,app_dir,root_path):
         self.app_dir = app_dir
+        self.root_path = root_path
+        self.dispatch_mode = False
 
 
     def get_calltitle(self):
@@ -481,14 +541,7 @@ class PythonCallBuilder():
     def gen_send_start_function(self, pointers:list):
         typedef_types_dict['PythonCallback'] = calltitle.lower()
         ctypedef_types_dict['PythonCallback'] = calltitle.lower()
-        # send = {
-        #     'arg_types' : ['PythonCallback'],
-        #     'args' : ['callback'],
-        #     'name' : 'SendCallback',
-        #     'real_args' : ((calltitle.lower(),'callback')),
-        #     'returns' : None
 
-        # }
         send = Function()
         send.arg_types = ['PythonCallback']
         send_arg = Arg()
@@ -503,7 +556,6 @@ class PythonCallBuilder():
         pointers.append(send)
 
     def parse_helper(self, string: str):
-        print("parse_helper:")
         module = ast.parse(string)
         body_list = module.body
         for class_body in body_list:
@@ -513,22 +565,16 @@ class PythonCallBuilder():
                 cbody_del_list = []
                 for cbody in class_body.body:
                     _cdec = None
-                    print(cbody,cbody.name)
                     dec_list = [dec.id for dec in cbody.decorator_list]
                     
                     
 
                     if "callback" in dec_list:
-                        print("removing:",cbody.name)
                         #class_body.body.remove(cbody)
                         cbody_del_list.append(cbody)
                     else:
                         cbody: ast.FunctionDef
-                        print(cbody.args.args)
                         for arg in cbody.args.args:
-                            print(arg.__dict__)
-                            print(arg.annotation.__dict__)
-                            print("is list:",isinstance(arg, ast.List))
                             anno = ast.Name
                             anno.id = "class"
                         cbody.args.args.insert(0,ast.arg(arg="self",annotation = None))
@@ -538,15 +584,188 @@ class PythonCallBuilder():
                     class_body.body.remove(rem_body)
 
         src = astor.to_source(module)
-        print(src)
         return src
 
+    def handle_function_return(self, body: FunctionDef, func: Function):
+        rtns = body.returns
+        if rtns:
+            if isinstance(rtns, ast.Subscript):
+                d = {
+                    "value": rtns.value.__dict__,
+                    "slice": rtns.slice.__dict__,
+                    "ctx": rtns.ctx.__dict__
+                }
+                pprint(d)
+            else:
+                func.returns = rtns.id
+        else:
+            func.returns = None
+
+    def handle_function_decorators(self, body: FunctionDef, func: Function, func_pointers: List[Function]) -> str:
+        _dec = None
+        for dec in body.decorator_list:
+            #print(dec.__dict__)
+            if isinstance(dec,ast.Call):
+                _dec = dec.func.id
+            else:
+                _dec = dec.id
+            if _dec:
+                #print(_dec)
+                func.decs.append(_dec)
+                if _dec == 'callback':
+                    func_pointers.append(func)
+                elif _dec == 'call_args':
+                    for arg in dec.args:
+                        #print(arg.id)
+                        func.call_args.append(arg.id)
+                elif _dec == "call_class":
+                    #print("call_class:",dec.args[0].id)
+                    func.call_class = dec.args[0].id
+                    _call_class = dec.args[0].id
+                elif _dec == "call_target":
+                    #print("call_target:",dec.args[0].id)
+                    func.call_target = dec.args[0].id
+        return _dec
+    
             
+    def handle_class_decorators(self,cbody, func_ptrs: List[Function], new_func_pointers: List[Function]):
+        id = None
+        for cdec in cbody.decorator_list:
+            #print(cdec.__dict__)
+            
+            if isinstance(cdec,ast.Call):
+                id: ast.Name = cdec.func.id
+            else:
+                id = cdec.id
+        # if not _cdec:
+        #     calltitle = cbody.name
+        #     self.gen_send_start_function(send_functions)
+        #else:
+            if id == "EventDispatcher":
+                self.dispatch_mode = True
+                self.handle_event_dispatcher(cdec, func_ptrs, new_func_pointers)
+            if id == "enum":
+                enum_args = []
+                for line in cbody.body:
+                    print(type(line))
+                    #enum_args.append((line.annotation.id,line.target.id))
+
+            if id == "struct":
+                cstruct_args = []
+                for line in cbody.body:
+                    cstruct_args.append((line.annotation.id,line.target.id))
+                #print(cstruct_args)
+                #print(self.gen_c_struct_custom(class_body.name,cstruct_args))
+                cstruct_list.append((cbody.name,cstruct_args))
+                python_types_dict.update({cbody.name:cbody.name})
+                #print(python_types_dict)
+                ctypedef_types_dict.update({cbody.name:cbody.name})
+                typedef_types_dict.update({cbody.name:cbody.name})
+                call_args_dict.update({cbody.name:"{arg}"})
+                send_args_dict.update({cbody.name:"{arg}"})
+        return id
+
+    def handle_event_dispatcher(self, decorator: ast.Call, func_ptrs: List[Function], new_func_pointers: List[Function]):
+        #print("handle_event_dispatcher", decorator)
+        #pprint(decorator.__dict__)
+        if len(decorator.args) != 0:
+            events: ast.List = decorator.args[0]
+            
+            #key: ast.Constant
+            d = {}
+            ptr_compare = []
+            self.global_events = _events_ = [event.value for event in events.elts]
+            enum = (self.get_calltitle(),_events_)
+            self.enum_list.append(enum)
+
+            # for i, key in enumerate(events.elts):
+            #     #print(key.__dict__)
+            #     value = key.value
+                
+                # d[key.value] = value
+
+            func: Function = Function()
+            func.name = "dispatchEvent"
+            func.call_class = f"{calltitle}_shared.dispatch"
+            func.call_target = ""
+            func.code = None
+            func.global_dispatch = True
+            body_name = f"{calltitle}Events"
+            #func_ptrs.append(func)
+            
+            arg0 = Arg()
+            #arg0.is_json = True
+            arg0.python_name = "event"
+            arg0.cy_name = "event"
+            arg0.cy_type = body_name
+            arg0.python_type = "object"
+            arg0.objc_name = "arg0"
+            arg0.objc_type = body_name
+            arg0.custom_call = True
+            arg0.call_code = f"{calltitle}_events[<int>arg0]"
+            
+
+            # arg0.call_code = f"{calltitle}"
+            
+            func.args_.append(arg0)
+            
+            arg1 = Arg()
+            arg1.is_json = True
+            arg1.python_name = "largs"
+            arg1.cy_name = "largs"
+            arg1.cy_type = ctypedef_types_dict["json"]
+            arg1.python_type = "object"
+
+            arg1.objc_name = "arg1"
+            arg1.objc_type = typedef_types_dict["json"]
+            func.args_.append(arg1)
+            arg1.custom_call = True
+            arg1.call_code = f"*json.loads(arg1)"
+
+            arg2 = Arg()
+            arg2.is_json = True
+            arg2.python_name = "kwargs"
+            arg2.cy_name = "kwargs"
+            arg2.cy_type = ctypedef_types_dict["json"]
+            arg2.python_type = "object"
+            arg2.custom_call = True
+            arg2.call_code = f"**json.loads(arg2)"
+
+            arg2.objc_name = "arg2"
+            arg2.objc_type = typedef_types_dict["json"]
+            func.args_.append(arg2)
+            #func.
+            #func.call_args.extend(["event", "value"])
+            objc = False
+            types_list = []
+
+            #func.compare_string = compare_string = " ".join(["void", arg0.cy_type, arg1.cy_type])
+            func.decs.append("callback")
+
+            func_ptrs.append(func)
+
+
+            
+            python_types_dict.update({body_name:body_name})
+            #print(python_types_dict)
+            ctypedef_types_dict.update({body_name:body_name})
+            typedef_types_dict.update({body_name:body_name})
+            call_args_dict.update({body_name:"{arg}"})
+            send_args_dict.update({body_name:"{arg}"})
+                #new_func_pointers.append(func)
+            #if objc:
+            
+            #obj_point = objc_func_pointer_string2.format(title="%s_ptr%d" % (calltitle.lower(),count), args=types_str, returns=_rtns)
+            #else:
+            #obj_point = func_pointer_string2.format(title="%s_ptr%d" % (calltitle.lower(),count), args=types_str, returns=_rtns)
+                
+
+        pprint(d)
 
     def parse_code(self, string:str):
         module = ast.parse(string.replace("List[","["))
-        func_pointers = []
-        new_func_ptrs = []
+        func_pointers: List[Function] = []
+        new_func_ptrs: List[Function] = []
         send_functions = []
         global kivy_properties
         kivy_properties = []
@@ -554,37 +773,20 @@ class PythonCallBuilder():
         for class_body in module.body:
             if isinstance(class_body,ast.Assign):
                 pass
-
+            
             if isinstance(class_body,ast.ClassDef):
-                
+
+                calltitle = class_body.name
                 
                 #self.gen_send_start_function(send_functions)
-                _cdec = None
-                #print(class_body.name)
-                for cdec in class_body.decorator_list:
-                    #print(cdec.__dict__)
-                    if isinstance(cdec,ast.Call):
-                        print(cdec.func.id,cdec.args[0].id)
-                    else:
-                        _cdec = cdec.id
-                if not _cdec:
-                    calltitle = class_body.name
-                    self.gen_send_start_function(send_functions)
-                else:
-                    if _cdec is "struct":
-                        cstruct_args = []
-                        for line in class_body.body:
-                            cstruct_args.append((line.annotation.id,line.target.id))
-                        #print(cstruct_args)
-                        #print(self.gen_c_struct_custom(class_body.name,cstruct_args))
-                        cstruct_list.append((class_body.name,cstruct_args))
-                        python_types_dict.update({class_body.name:class_body.name})
-                        #print(python_types_dict)
-                        ctypedef_types_dict.update({class_body.name:class_body.name})
-                        typedef_types_dict.update({class_body.name:class_body.name})
-                        call_args_dict.update({class_body.name:"{arg}"})
-                        send_args_dict.update({class_body.name:"{arg}"})
-                #cbody: ast.FunctionDef().type_comment
+                _cdec = self.handle_class_decorators(class_body, func_pointers, new_func_ptrs)
+                # if _cdec:
+                #     new_func_ptrs.extend(func_pointers)
+                #if not _cdec:
+                
+                self.gen_send_start_function(send_functions)
+                
+                _cdec = None #Quick fix for deco bug
                 if not _cdec:
                     for cbody in class_body.body:
                         
@@ -595,41 +797,11 @@ class PythonCallBuilder():
                             temp = Function()
                             temp.code = ast.get_docstring(cbody)
                             new_func_ptrs.append(temp)
-                            _dec = None
                             _call_class = ""
 
-
-                            rtns = cbody.returns
-                            if rtns:
-                                temp.returns = rtns.id
-                            else:
-                                temp.returns = None
-                    
-                            for dec in cbody.decorator_list:
-                                #print(dec.__dict__)
-                                if isinstance(dec,ast.Call):
-                                    _dec = dec.func.id
-                                else:
-                                    _dec = dec.id
-                                if _dec:
-                                    #print(_dec)
-                                    temp.decs.append(_dec)
-                                    if _dec == 'callback':
-                                        func_pointers.append(temp)
-                                    elif _dec == 'call_args':
-                                        for arg in dec.args:
-                                            #print(arg.id)
-                                            temp.call_args.append(arg.id)
-                                    elif _dec == "call_class":
-                                        #print("call_class:",dec.args[0].id)
-                                        temp.call_class = dec.args[0].id
-                                        _call_class = dec.args[0].id
-                                    elif _dec == "call_target":
-                                        #print("call_target:",dec.args[0].id)
-                                        temp.call_target = dec.args[0].id
-                                        
-                                    
-                                
+                            self.handle_function_return(cbody, temp)
+                            _dec = self.handle_function_decorators(cbody, temp, func_pointers)
+ 
                             if not _dec:
                                 send_functions.append(temp)
                             temp.name = cbody.name
@@ -637,101 +809,17 @@ class PythonCallBuilder():
                             func_arg_list = []
 
                             for i,_arg in enumerate(cbody.args.args):
-                    
+                                func_arg: Arg
+                                arg_type: str
+                                func_arg, arg_type = Arg.generate_general_arg(_arg, _dec, func_arg_list, temp, i)
                                 
-                                func_arg = Arg()
-                                temp.args_.append(func_arg)
-                                func_arg.objc_name = "arg%d" % i
-                                func_arg.call_name = _arg.arg
-
-                                func_arg.python_name = _arg.arg
-                                func_arg.cy_name = _arg.arg
-                                
-                                if not isinstance(_arg.annotation,(ast.List,ast.Bytes)):
-                                    #print("not list",_arg.__dict__)
-                                    
-                                    # if isinstance(_arg.annotation, ast.Subscript):
-                                    #     print(_arg.annotation.__dict__)
-                                    #     print(_arg.annotation.slice.__dict__)
-                                    #     print(_arg.annotation.value.__dict__)
-                                    #     arg_type = _arg.annotation.slice.value.id
-                                    #     _arg_id = _arg.arg
-
-                                    #else:
-                                    arg_type = _arg.annotation.id
-                                    #print("\t argtype:",arg_type)
-                                    func_arg.is_list = False
-                                    func_arg.python_type = python_types_dict[arg_type]
-                                    func_arg.cy_type = ctypedef_types_dict[arg_type]
-
-                                    func_arg.objc_type = typedef_types_dict[arg_type]
-
-                                    func_arg_list.append(arg_type)
-                                    #func_arg_list.append(_arg.annotation.id)
-                                    temp.arg_types.append(arg_type)
-                                    #temp.arg_types.append(_arg.annotation.id)
-                                    temp.python_args.append(python_types_dict[arg_type])
-                                    if arg_type == "json":
-                                        func_arg.is_json = True
-
-                                    if arg_type == "data":
-                                        func_arg.is_data = True
-                                        list_counter = Arg()
-                                        temp.args_.append(list_counter)
-                                        list_counter.is_counter = True
-
-                                        list_counter.cy_type = "long"
-                                        list_counter.cy_name = "%s_size" % _arg.arg
-                                        list_counter.python_name = "%s_size" % _arg.arg
-                                        list_counter.objc_type = "long"
-                                        list_counter.objc_name = "arg%d_size" % i
-                        
-                                    if _dec == 'callback':
-                                        
-                                        func_arg_list.append("arg%d_size" % i)
-                                        temp.args.append("arg%d_size" % i)
-                                        temp.arg_names.append("%s_size" % _arg.arg)
-                                        func_arg_list.append("long")
-                                        temp.arg_types.append("long")
-                                else:
-                                    #### Call (list type)####
-                                    #print("is list:", _arg.annotation.__dict__)
-                                    #print(_arg.annotation.elts[0].__dict__)
-                                    arg_type = _arg.annotation.elts[0].id
-                                    #print("\t argtype:",arg_type)
-                                    #arg_type = _arg.annotation.slice.value.id
-                                    #arg_type = _arg.annotation.args[0].id
-                                    func_arg.is_list = True
-                                    func_arg.python_type = "list"
-                                    func_arg.cy_type = ctypedef_list_dict[arg_type]
-                                    func_arg.list_type = arg_type
-
-                                    func_arg.objc_type = typedef_list_dict[arg_type]
-
-                                    list_counter = Arg()
-                                    temp.args_.append(list_counter)
-                                    list_counter.is_counter = True
-
-                                    list_counter.cy_type = "long"
-                                    list_counter.cy_name = "%s_size" % _arg.arg
-                                    list_counter.python_name = "%s_size" % _arg.arg
-                                    list_counter.objc_type = "long"
-                                    list_counter.objc_name = "arg%d_size" % i
-                        
-                                    if _dec == 'callback':
-                                        
-                                        func_arg_list.append("arg%d_size" % i)
-                                        temp.args.append("arg%d_size" % i)
-                                        temp.arg_names.append("%s_size" % _arg.arg)
-                                        func_arg_list.append("long")
-                                        temp.arg_types.append("long")
-    
                             for child in cbody.body:
 
                                 if isinstance(child,ast.Expr):
                                     item: Expr = child
 
                                     temp.callback = item.value.s
+                        ##Property Handler
                         if isinstance(cbody,ast.AnnAssign):
                             #print("found AnnAssign",cbody.__dict__)
                             #print("\t%s"%cbody.target.id)
@@ -753,6 +841,7 @@ class PythonCallBuilder():
                                         prop_body: ast.Assign = cbody
                                         target_id = prop_body.targets[0].id
                                         prop_arg_type = cbody.value.args[0].id 
+
                                         #print(func_id,target_id,prop_arg_type,prop_body.targets[0].__dict__)
                                         kivy_properties.append(target_id)
 
@@ -789,34 +878,35 @@ class PythonCallBuilder():
                                         # send_args_dict.update({class_body.name:"{arg}"})
                                         #prop.
                                         
-                                        
-
-
-                        
-            if isinstance(class_body,ast.ClassDef):
-                pass
         
         ptr_compare = []
         ptr_types2 = []
-        for func in new_func_ptrs:
+        #print("new_func_ptrs count", len(new_func_ptrs))
+        pointer_test = func_pointers
+        for func in pointer_test:
+
             rtns = func.returns
+
+            if not rtns:
+                rtns = "void"
+
+            #_arg: Arg
+            compare =  [rtns]
+            #compare.append(rtns)
+            for _arg in func.args_:
+                compare.append(_arg.cy_type)
+            
+            compare_string = " ".join(compare)
+            func.compare_string = compare_string
             if 'callback' in func.decs:
-
-                _arg: Arg
-                compare =  []
-                for _arg in func.args_:
-                    compare.append(_arg.cy_type)
-                if len(compare) != 0:
-                    if (compare,rtns) not in ptr_compare:
-                        ptr_compare.append((compare,rtns))
-                        zip_arg = tuple(zip(compare,func.args))
-                        ptr_types2.append(func)
+                #print(compare_string not in ptr_compare, compare_string)
+                if compare_string not in ptr_compare:
+                    print(f"adding {func.name}")
+                    ptr_compare.append(compare_string)
+                    ptr_types2.append(func)
                 else:
-                    if ([],rtns) not in ptr_compare:
-                        ptr_compare.append(([],rtns))
-                        zip_arg = tuple(zip(compare,func.args))
-                        ptr_types2.append(func)
-
+                    print(f"{func.name} already in there")
+        #print(ptr_compare[0])
             
         for func in send_functions:
             real_arg = tuple(zip(func.arg_types,func.args))
@@ -827,8 +917,8 @@ class PythonCallBuilder():
 
         return (func_pointers,send_functions,ptr_types2)
 
-    def gen_cyfunction_pointers(self, func_list,ptr_types,objc=True):
-                
+    def gen_cyfunction_pointers(self, func_list: List[Function], ptr_types, objc=True):
+        #print("gen_cyfunction_pointers",func_list, ptr_types) 
         #ptr_types = []
         count = 0
         function_pointers = []
@@ -856,27 +946,57 @@ class PythonCallBuilder():
             else:
                 _rtns = "void"
             if objc:
-                obj_point = objc_func_pointer_string2.format(title="%s_ptr%d" % (calltitle.lower(),count), args=types_str, returns=_rtns)
+                obj_point = objc_func_pointer_string2.format(
+
+                    title= f"{calltitle.lower()}_ptr{count}",
+                    args=types_str, returns=_rtns
+
+                    )
             else:
-                obj_point = func_pointer_string2.format(title="%s_ptr%d" % (calltitle.lower(),count), args=types_str, returns=_rtns)
+                obj_point = func_pointer_string2.format(
+                    
+                    title="%s_ptr%d" % (calltitle.lower(),count),
+                    args=types_str, returns=_rtns
+                    
+                    )
             function_pointers.append(obj_point)
 
             for real_func in func_list:
-                if [arg.cy_type for arg in real_func.args_ ] == [arg.cy_type for arg in func.args_ ]:
+                #print(f"{func.name}:\n\tfunc: {func.compare_string}\n\tcompare {real_func.name}:{real_func.compare_string} \n\tmatch:{real_func.compare_string == func.compare_string}")
+
+                if real_func.compare_string == func.compare_string:
+                #if [arg.cy_type for arg in real_func.args_ ] == [arg.cy_type for arg in func.args_ ]:
                     real_func.func_ptr = "%s_ptr%d" % (calltitle.lower(),count)
 
             count += 1
         return function_pointers
 
     def gen_c_struct(self, pointers:list):
-        cython_struct = "\tctypedef struct %sCallback:" % calltitle
+        cython_struct = f"\tctypedef struct {calltitle}Callback:"
         struct_strings = [cython_struct]
         func: Function
         for func in pointers:
-            string = "\t\t%s %s" % (func.func_ptr,func.name)
+            string = f"\t\t{func.func_ptr} {func.name}"
             struct_strings.append(string)
 
         return "\n".join(struct_strings)
+
+
+    def gen_c_enum(self, title: str, enums: List[str], objc=False):
+        if objc:
+            #enum_head = f"typedef enum {title}Events {{\n"
+            enum_head = f"typedef NS_ENUM(NSUInteger, {title}Events) {{\n"
+            
+        else:
+            enum_head = f"\tctypedef enum {title}Events:\n"
+        enum_string = ",\n".join([f"\t\t{enum}" for enum in enums])
+        if objc:
+            #enum_string += f"\n\t\t}} {title}Events;"
+            enum_string += "\n\t\t};"
+        
+        return enum_head + enum_string
+
+
 
     def gen_c_struct_custom(self,title:str, pointers:list,objc=False):
         if objc:
@@ -933,7 +1053,10 @@ class PythonCallBuilder():
 
     def gen_cython_class(self, title:str,call_var:str,fill_struct:str):
         class_list = []
-        class_list.append(cython_class.format(_class=title,call_var=call_var) )
+        if self.dispatch_mode:
+            class_list.append(cython_class_dispatch.format(_class=title,call_var=call_var, events = self.enum_list[0][1]) )
+        else:
+            class_list.append(cython_class.format(_class=title,call_var=call_var) )
         class_list.append(fill_struct )
         class_list.append("\t\tset_%s_Callback(callbacks)" % calltitle )
         #print(kivy_properties)
@@ -1038,6 +1161,17 @@ class PythonCallBuilder():
         
         return rtn_string + "\n"
 
+    def gen_global_events(self):
+        event_strings = ["######## Global Dispatch Events ########"]
+        for event in self.global_events:
+            s = global_event_function.format(
+                title = event
+            )
+            event_strings.append(s)
+        if self.dispatch_mode:
+            return "\n".join(event_strings)
+        else:
+            return ""
 
     def gen_send_functions(self, pointers:list,objc=False,subtitle=None,header=False):
         for i in range(len(pointers)):
@@ -1127,8 +1261,8 @@ class PythonCallBuilder():
                     sfunctions.append( ext_cyfunc.format(title=func.name, args=types_str ,returns=_rtns) )
                 else:
                     #print("send_func",func.name)
-                    for _arg_ in func.args_:
-                        print(_arg_.__dict__)
+                    # for _arg_ in func.args_:
+                    #     #print(_arg_.__dict__)
                     sfunctions.append( self.gen_cyfunc_sends(func,types_list,", ".join(args2),func.returns,len(func.args_) != 0) )
                 # pprint("".join(sfunctions)
             
@@ -1140,6 +1274,7 @@ class PythonCallBuilder():
         cy_functions = []
         func: Function
         for i,func in enumerate(pointers):
+            print(f"gen_cython_callbacks - func name: {func.name}")
             _title = func.name
             #args = func.real_args
             types_list = []
@@ -1151,7 +1286,7 @@ class PythonCallBuilder():
                 _types.append(arg.cy_type)
                 _types.append(arg.objc_name)
                 args2.append(arg.cy_name)
-                print(func.name,"callback arg",arg.__dict__)
+                #print(func.name,"callback arg",arg.__dict__)
             # for types in func.real_args2:
             #     _types = []
             #     for i,_type in enumerate(types):
@@ -1165,24 +1300,29 @@ class PythonCallBuilder():
                 types_list.append(str0)
             args_str = ", ".join(types_list)
             call_args = []
-            call_arg: Arg
+            #call_arg: Arg
             _call_class = func.call_class
             for call_arg in func.args_:
+                print(f"\t{_call_class} - {call_arg.python_name}")
                 if _call_class != call_arg.python_name:
                     if call_arg.is_list:
                         call_args.append(call_list_dict[call_arg.list_type].format(arg=call_arg.objc_name))
                     else:
                         if not call_arg.is_counter:
-                            if call_arg.is_json:
-                                #print("json arg:",call_arg.python_name)
-                                arg_name = call_args_dict["json"].format(arg=call_arg.objc_name)
-                            elif call_arg.is_data:
-                                arg_name = call_args_dict["data"].format(arg=call_arg.objc_name)
+                            if call_arg.custom_call:
+                                arg_name = call_arg.call_code
                             else:
-                                arg_name = call_args_dict[call_arg.python_type].format(arg=call_arg.objc_name)
+                                if call_arg.is_json:
+                                    #print("json arg:",call_arg.python_name)
+                                    arg_name = call_args_dict["json"].format(arg=call_arg.objc_name)
+                                elif call_arg.is_data:
+                                    arg_name = call_args_dict["data"].format(arg=call_arg.objc_name)
+                                else:
+                                    arg_name = call_args_dict[call_arg.python_type].format(arg=call_arg.objc_name)
                             call_args.append(arg_name)
 
             callback = "(%s)" % ", ".join(call_args)#.split(".")[-1]
+            print(f"\tcallback: {callback}",func.code)
             rtns = func.returns
             if rtns:
                 _rtns = ctypedef_types_dict[rtns]
@@ -1193,13 +1333,22 @@ class PythonCallBuilder():
             if func.call_target != "":
                 call = ".".join((func.call_target,_title))
             else:
-                call = _title
+                if func.global_dispatch:
+                    call = ""
+                else:
+                    call = _title
             if func.code:
                 code = func.code.replace("\n","\n\t") #+ callback
                 
                 s = cython_callback3.format(title=_title,call=call,callback=callback,args = args_str,_class=func.call_class,returns=_rtns,code=code)
             else:
-                s = cython_callback2.format(title=_title,call=call,callback=callback,args = args_str,_class=func.call_class,returns=_rtns)
+                if func.global_dispatch:
+
+                    s = cython_global_dispatch.format(title=_title,callback=callback,args = args_str,_class=func.call_class,returns=_rtns)
+            
+                else:
+                    s = cython_callback2.format(title=_title,call=call,callback=callback,args = args_str,_class=func.call_class,returns=_rtns)
+            print(s)
             cy_functions.append(s)
         
         return "".join(cy_functions)
@@ -1283,8 +1432,8 @@ class PythonCallBuilder():
 
             #"module_name_as_root" : True ,
 
-            "#PYTHONLINKROOT" : os.path.dirname(__file__)
-
+            #"#PYTHONLINKROOT" : os.path.dirname(__file__)
+            "#PYTHONLINKROOT" : self.root_path
 
         }
 
@@ -1333,13 +1482,17 @@ class PythonCallBuilder():
             kivy_recipe = str(f.read())
         global cstruct_list
         cstruct_list = []
-
+        self.enum_list = []
+        self.global_events = []
         #script = sys.argv[2]
+        py3_compiler = "#cython: language_level=3\n"
         pyfile = open("{}".format(script), "r" )
         test = pyfile.read()
 
         functions = self.parse_code(test)
         site_manager_path = join(root_path,"venv/lib/python3.8/site-packages")
+        
+
         # py_string = ""
         # with open(py_file, "r") as f:
         #     py_string = str( f.read().replace("@callback", "") )
@@ -1350,7 +1503,7 @@ class PythonCallBuilder():
         
         func_pointers,send_functions,ptr_types = functions
 
-        pointer_types = []
+        #pointer_types = []
         c_pointers = self.gen_cyfunction_pointers(func_pointers,ptr_types,False)
 
         objc_pointer_types = []
@@ -1366,44 +1519,56 @@ class PythonCallBuilder():
         except:
             print("builds/%s exist" % calltitle.lower())
         # f = open(join(BUILD_DIR,calltitle.lower(),calltitle.lower()+"_cy.pyx"), "w+")
-        f = open(join(BUILD_DIR,calltitle.lower(),calltitle.lower()+".pyx"), "w+")
-        cy_list = [
-            "import json",
-            "from libc.stdlib cimport malloc, free",
-            "from libcpp cimport bool as bool_t",
-            "cdef extern from \"_%s.h\":" % calltitle.lower(),
-            "\t\n".join([self.gen_c_struct_custom(arg[0],arg[1]) for arg in cstruct_list]),
-            "",
-            "\t######## cdef extern Callback Function Pointers: ########",
-            "\t" + "\t".join(c_pointers ),
-            "",
-            "\t######## cdef extern Callback Struct: ########",
-            self.gen_c_struct(func_pointers),
-            "",
-            #self.gen_structtype_init_funct(calltitle,False) ,
-            "\t######## cdef extern Send Functions: ########\n",
-            self.gen_send_functions(send_functions,False,None,True),
-            "",
-            "######## Callbacks Functions: ########\n",
-            self.gen_cython_callbacks(func_pointers),
-            "######## Cython Class: ########",
-            self.gen_cython_class(calltitle,calltitle + "_voidptr",self.fill_cstruct(func_pointers)) ,
-            "",
-            "######## Send Functions: ########",
-            self.gen_send_functions(send_functions,False)
-        ]
-        
+        if self.dispatch_mode:
+            dispatch_import = "from kivy._event cimport EventDispatcher"
+        else:
+            dispatch_import = ""
+        if len(self.enum_list) != 0:
+            export_enum_list = f"cdef list {calltitle}_events = {self.enum_list[0][1]}"
+        else:
+            export_enum_list = ""
+        with open(join(BUILD_DIR,calltitle.lower(),calltitle.lower()+".pyx"), "w+") as f:
+            cy_list = [
+                "#cython: language_level=3",
+                dispatch_import,
+                "import json",
+                "from libc.stdlib cimport malloc, free",
+                "from libcpp cimport bool as bool_t",
+                f"cdef extern from \"_{calltitle.lower()}.h\":",
+                "\t\n".join([self.gen_c_enum(arg[0],arg[1]) for arg in self.enum_list]),
+                "\t\n".join([self.gen_c_struct_custom(arg[0],arg[1]) for arg in cstruct_list]),
+                "",
+                "\t######## cdef extern Callback Function Pointers: ########",
+                "\t" + "\t".join(c_pointers ),
+                "",
+                "\t######## cdef extern Callback Struct: ########",
+                self.gen_c_struct(func_pointers),
+                "",
+                #self.gen_structtype_init_funct(calltitle,False) ,
+                "\t######## cdef extern Send Functions: ########\n",
+                self.gen_send_functions(send_functions,False,None,True),
+                "",
+                "######## Callbacks Functions: ########\n",
+                self.gen_cython_callbacks(func_pointers),
+                "######## Cython Class: ########",
+                export_enum_list,
+                self.gen_cython_class(calltitle,calltitle + "_voidptr",self.fill_cstruct(func_pointers)) ,
+                "",
+                self.gen_global_events(),
+                "######## Send Functions: ########",
+                self.gen_send_functions(send_functions,False)
+            ]
+
         #f.write(fill_cstruct(c_pointers))
-        cy_script = "\n".join(cy_list)
-        f.write(cy_script)
-        f.write("\n")
-        f.close()
+            cy_script = "\n".join(cy_list)
+            f.write(cy_script + "\n")
 
         objc_hlist = []
         
         objc_hlist.append("#import <Foundation/Foundation.h>\n")
+        objc_hlist.append("\t\n".join([self.gen_c_enum(arg[0],arg[1], True) for arg in self.enum_list]))
         objc_hlist.append("\n".join([self.gen_c_struct_custom(arg[0],arg[1],True) for arg in cstruct_list]))
-        objc_hlist.append("\n")
+        objc_hlist.append("\n\n")
         objc_hlist.append("//######## cdef extern Callback Function Pointers: ########//\n")
         objc_hlist.append("".join(objc_pointers ) )
         objc_hlist.append("\n")
