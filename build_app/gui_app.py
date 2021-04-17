@@ -602,7 +602,10 @@ class KivySwiftLink(App):
             
             #shutil.copy(py_file, )
             pack_all(self.root_path,self.app_dir,"master.zip",calltitle)
-            file_time = getmtime(join(self.app_dir,"cython_headers","_%s.h" % calltitle))
+            try:
+                file_time = getmtime(join(self.app_dir,"cython_headers","_%s.h" % calltitle))
+            except:
+                file_time = 0
             self.update_header_group()
             
             #self.show_builds()
