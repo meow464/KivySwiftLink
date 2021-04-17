@@ -15,17 +15,17 @@ x   -   exit
 """
 
 read -p "command: " INPUT_STRING
-if [ "$INPUT_STRING" = "p" ]
+if [ $INPUT_STRING = p ]
 then
     echo "nothing"
-elif [ "$INPUT_STRING" = "r" ]
+elif [ $INPUT_STRING = r ]
 then
     ""
     # cd $folder_var
     # . venv/bin/activate
     # python wrapper_tool.py
     # cd ..
-elif [ $INPUT_STRING = "w" ]
+elif [ $INPUT_STRING = w ]
 then
     echo "type folder name - default is:"
     echo
