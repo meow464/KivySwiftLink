@@ -15,9 +15,9 @@ x   -   exit
 """
 
 read -p "command: " INPUT_STRING
-if [ $INPUT_STRING = "p" ]      ; then
+if [ "$INPUT_STRING" = "p" ]      ; then
     echo "nothing"
-elif [ $INPUT_STRING = "r" ]    ; then
+elif [ "$INPUT_STRING" = "r" ]    ; then
     ""
     # cd $folder_var
     # . venv/bin/activate
