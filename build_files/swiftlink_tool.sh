@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # Ask the user for login details
 BASEDIR=$(dirname $0)
 INPUT_STRING=none
