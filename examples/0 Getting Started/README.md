@@ -39,7 +39,7 @@ class KivyTest:
 
 ### Launch the wrapper gui
 
-From the root folder "kivyios_swift/"
+From the root folder "kivyswift/"
 run:
 
 ```sh
