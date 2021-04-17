@@ -16,6 +16,8 @@ x   -   exit
 
 read -p "command: " INPUT_STRING
 if [ $INPUT_STRING = p ]
+
+
 then
     echo "nothing"
 elif [ $INPUT_STRING = r ]
