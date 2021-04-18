@@ -41,6 +41,7 @@ class PDF_Viewer: UIViewController {
     
     func loadPDF(path: String) {
         let filepath = "YourApp/".appending(path)
+        print(filepath)
         let url = resourceUrl(forFileName: filepath)!
         let doc = PDFDocument(url: url)
         print(doc as Any)
@@ -57,5 +58,57 @@ class PDF_Viewer: UIViewController {
         print("url error")
         return nil
     }
+    
+}
+
+
+class KivyUIView: UIView {
+
+    override func willMove(toSuperview newSuperview: UIView?) {
+        if newSuperview != nil {
+            print("will add View")
+            self.alpha = 0
+        }
+    }
+    
+    override func didMoveToSuperview() {
+        print("didMoveToSuperview")
+        UIView.animate(withDuration: 1) {
+            self.alpha = 1
+        }
+    }
+    
+}
+
+
+class DocumentPicker: UIViewController {
+    let pick = UIDocumentPickerViewController(documentTypes: [], in: .open)
+    var callback: AppleApiCallback?
+    
+    override func viewWillAppear(_ animated: Bool) {
+        self.view.addSubview(pick.view)
+//        if let call = self.callback {
+//            if let data = self.view.pixelData() {
+//                print(data.size)
+//                call.preview_pixel_data(data.bytes, data.size, Int(self.view.bounds.width), Int(self.view.bounds.height))
+//            }
+//            
+//        }
+    }
+    override func viewDidLoad() {
+        
+//        if let call = self.callback {
+//            if let data = self.view.pixelData() {
+//                print(data.size)
+//                call.preview_pixel_data(data.bytes, data.size, Int(self.view.bounds.width), Int(self.view.bounds.height))
+//            }
+//
+//        }
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        
+    }
+    
     
 }

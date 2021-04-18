@@ -56,6 +56,7 @@ elif [ "$INPUT_STRING" = "w" ]; then
     toolchain build kivy
     mkdir wrapper_sources
     mkdir wrapper_builds
+    mkdir wrapper_headers
     
     echo
     echo "Working folder <$folder_var> is now ready"

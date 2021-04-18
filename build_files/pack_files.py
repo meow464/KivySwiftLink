@@ -112,6 +112,7 @@ def pack_all(root_dir, app_dir, src, dst):
     for file in files:
         if os.path.isfile(file):
             shutil.copy2(file, join(app_dir,"cython_headers"))
+            shutil.copy2(file, join(root_dir,"wrapper_headers",f"{dst}.h"))
     #shutil.copy(join(builds,"*.h"), join(app_dir,"cython_headers"))
 
 if __name__ == '__main__':
