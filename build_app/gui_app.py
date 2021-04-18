@@ -510,7 +510,7 @@ class KivySwiftLink(App):
     kivy_recipes: str
     def __init__(self,root_path, **kwargs):
         super(KivySwiftLink,self).__init__(**kwargs)
-        
+        self.project = None
         self.root_path = root_path
         self.wdog_thread()
         self.app_dir = join(root_path,"PythonSwiftLink")
@@ -570,12 +570,18 @@ class KivySwiftLink(App):
         thread.start()
     
     def compile_all_thread(self):
-        for wrap in self.wrappers:
+        wrappers_count = len(self.wrappers)
+        new_compiled_wraps = []
+        for i, wrap in enumerate(self.wrappers):
             if self.db.wrap_exist(wrap.title):
                 title = self.db.get_item(wrap.title)["class_title"]
             self.update_log("\n\%sn" % wrap.text)
             if wrap.compiled != 1 and wrap.is_build == 1:
                 self.compiler(wrap,title)
+                new_compiled_wraps.append(title)
+            
+        self.update_frameworks(new_compiled_wraps)
+            #self.update_log(self.calltitle)
     
 
 
@@ -603,10 +609,11 @@ class KivySwiftLink(App):
             #shutil.copy(py_file, )
             pack_all(self.root_path,self.app_dir,"master.zip",calltitle)
             try:
-                file_time = getmtime(join(self.app_dir,"cython_headers","_%s.h" % calltitle))
+                #file_time = getmtime(join(self.app_dir,"cython_headers","_%s.h" % calltitle))
+                file_time = getmtime(join(self.root_path,"wrapper_headers","_%s.h" % calltitle))
             except:
                 file_time = 0
-            self.update_header_group()
+            #self.update_header_group()
             
             #self.show_builds()
             #print("show_builds")
@@ -651,37 +658,81 @@ class KivySwiftLink(App):
     #         }
     #     print(d)
     #     _json_store["build_info"] = d
+    def update_frameworks(self,frame_names: List[str]):
+        self.load_xcode_project()
+        project = self.project
+        if project:
+            if self.project_target:
+                for name in frame_names:
+                    key_word = f"lib{name}.a"
+                    # target = self.project_target
+                    # target_name = os.path.basename(target)[:-4]
+                    # print("target_name: ",target_name)
+                    # path = "%s/%s.xcodeproj/project.pbxproj" % (target, target_name)
+                    
+                    frameworks = project.get_or_create_group("Frameworks")
+                    framework_list = set([child._get_comment() for child in frameworks.children])
+                    if key_word not in framework_list:
+                        project.add_file(join(self.root_path,"dist","lib",key_word),frameworks)
+                #if start == end:
+                project.backup()
+                project.save()
 
     def update_classes_group(self):
-        if self.project_target:
+        self.load_xcode_project()
+        project = self.project
+        project_updated = True
+        
+        if not project:
+            return
+        if self.project_target and self.project:
+            project.remove_framework_search_paths(["/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator14.4.sdk/System/Library/Frameworks"])
+            project.remove_library_search_paths(["/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator14.4.sdk/usr/lib"])
             target = self.project_target
             target_name = os.path.basename(target)[:-4]
             print("target_name: ",target_name)
             path = "%s/%s.xcodeproj/project.pbxproj" % (target, target_name)
-            project = XcodeProject.load(path)
-            project.remove_group_by_name("Classes",)
-            classes = project.get_or_create_group("Classes")
-            classes_list = set([child._get_comment() for child in classes.children])
-            
-            for item in ("runMain.h","runMain.m"):
-                if item not in classes_list and item != ".DS_Store":
-                    project.add_file(join(self.app_dir,item), parent=classes)
-                    project_updated = True
-
+            # project = XcodeProject.load(path)
+            project = self.project
             sources = project.get_or_create_group("Sources")
             sources_list = set([child._get_comment() for child in sources.children])
-            print("sources_list",sources_list)
-            if os.path.exists(join(self.project_target,"main.m")):
-                os.remove(join(self.project_target,"main.m"))
-            if "main.m" in sources_list:
-                for src in sources.children:
-                    if src._get_comment() == "main.m":
-                        sources.children.remove(src)
-                        break
+            
+            for src in sources.children:
+                ID = str(src)
+                file = src._get_comment()
+                if file in ["main.m"]:
+                    project.remove_file_by_id(ID)
+                print(str(src),src._get_comment())
+            # if os.path.exists(join(self.project_target,"main.m")):
+            #     os.remove(join(self.project_target,"main.m"))
+            # if "main.m" in sources_list:
+            #     for src in sources.children:
+            #         if src._get_comment() == "main.m":
+                        
+            #             sources.children.remove(src)
+            #             break
+            
+            try:
+                project.remove_group_by_name("Classes")
+            except:
+                print("removing classes failed")
+            classes = project.get_or_create_group("Classes")
+            classes_list = set([child._get_comment() for child in classes.children])
+            with open(join(self.app_dir,"project_build_files","runMain.m"), "r") as f:
+                main_string = f.read()
+            with open(join(self.project_target,"runMain.m"), "w") as f:
+                f.write(main_string.replace("{$project_path}",self.root_path))
+            if not exists(join(self.project_target,"runMain.h")):
+                shutil.copy(join(self.app_dir,"project_build_files","runMain.h"), join(self.project_target,"runMain.h"))
+            for item in ("runMain.h","runMain.m"):
+                if item not in classes_list and item != ".DS_Store":
+                    project.add_file(join(self.project_target,item), parent=classes)
+                    project_updated = True
+
                         
             for (dirpath, dirnames, filenames) in os.walk(join(self.app_dir, "project_build_files")):
                 for item in filenames:
-                    if item not in sources_list and item != ".DS_Store":
+                    if item not in sources_list and item != ".DS_Store" and item.lower().endswith(".swift"):
                         dst = join(self.project_target,item)
                         shutil.copy(join(dirpath,item),dst)
                         #print(dirpath,item)
@@ -691,16 +742,36 @@ class KivySwiftLink(App):
             with open(path, "r") as f:
                 pro_file = f.read()
             update_bridge = False
-            pro_lines = pro_file.splitlines()
-            for i, line in enumerate(pro_lines):
-                if search("SWIFT_OBJC_BRIDGING_HEADER",line):
-                    #print(line,line.count("\t"))
-                    if not search(".*\$\{PRODUCT_NAME\}-Bridging-Header.h",line):
-                        #print("editing line")
-                        string = "".join(["\t" * line.count("\t"), "SWIFT_OBJC_BRIDGING_HEADER = \"${PRODUCT_NAME}-Bridging-Header.h\";"] )
-                        #print(string)
-                        pro_lines[i] = string
-                        update_bridge = True
+            bridge_header = join(self.project_target,f"{target_name}-Bridging-Header.h")
+            if not exists(bridge_header):
+                bridge_strings = [
+                    "#import \"runMain.h\"",
+                    "\n\n",
+                    "//#Wrappers Start"
+                    "//Insert Your Wrapper Headers Here - <wrapper_class_name>.h//",
+                    "\n",
+                    "//#Wrappers End",
+                    "\n\n",
+                    "//Insert Other OBJ-C Headers Here:"
+
+                ] 
+                with open(bridge_header, "w") as b:
+                    b.write("\n".join(bridge_strings))
+            #if f"{target_name}-Bridging-Header.h" not in classes_list:
+            project.add_file(bridge_header, parent=classes, force=False)
+            # pro_lines = pro_file.splitlines()
+            # for i, line in enumerate(pro_lines):
+            #     if search("SWIFT_OBJC_BRIDGING_HEADER",line):
+            #         print(line,line.count("\t"))
+            #         if not search(".*\$\{PRODUCT_NAME\}-Bridging-Header.h",line):
+            #             #print("editing line")
+            #             string = "".join(["\t" * line.count("\t"), "SWIFT_OBJC_BRIDGING_HEADER = \"${PRODUCT_NAME}-Bridging-Header.h\";"] )
+            #             #print(string)
+            #             pro_lines[i] = string
+            #             update_bridge = True
+            #project.add_header_search_paths(join(self.app_dir,"cython_headers"),False)
+            project.add_header_search_paths(join(self.root_path,"wrapper_headers"),False)
+            #self.project.add_framework_search_paths(join(self.app_dir,"cython_headers"))
             # for i, line in enumerate(pro_lines):
             #     if search("SWIFT_OBJC_BRIDGING_HEADER",line):
             #         print(line,line.count("\t"))
@@ -709,35 +780,38 @@ class KivySwiftLink(App):
             if project_updated:
                 project.backup()
                 project.save()
+                #self.project = project = XcodeProject.load(path)
 
-            if update_bridge:
-                project.backup()
-                with open(path, "w") as f:
-                    f.write("\n".join(pro_lines))
+            # if update_bridge:
+            #     project.backup()
+            #     project.save()
+            #     with open(path, "w") as f:
+            #         f.write("\n".join(pro_lines))
+            #     self.project = XcodeProject.load(path)
     
-    def update_header_group(self):
-        if self.project_target:
-            target = self.project_target
-            target_name = os.path.basename(target)[:-4]
-            #print("target_name: ",target_name)
-            path = "%s/%s.xcodeproj/project.pbxproj" % (target, target_name)
-            project = XcodeProject.load(path)
-            header_classes = project.get_or_create_group("Headers")
-            #print(header_classes.children[0]._get_comment())
-            header_list = set([child._get_comment() for child in header_classes.children])
-            header_dir = join(self.app_dir,"cython_headers")
-            #print(header_dir)
-            project_updated = False
-            for (dirpath, dirnames, filenames) in os.walk(header_dir):
-                for file in filenames:
-                    _file = join(header_dir,file)
-                    if file not in header_list and file != ".DS_Store":
-                        project.add_file(_file, parent=header_classes)
-                        project_updated = True
-            if project_updated:
-                project.backup()
-                project.save()
-            #print(header_classes)
+    # def update_header_group(self):
+    #     if self.project_target:
+    #         target = self.project_target
+    #         target_name = os.path.basename(target)[:-4]
+    #         #print("target_name: ",target_name)
+    #         path = "%s/%s.xcodeproj/project.pbxproj" % (target, target_name)
+    #         project = XcodeProject.load(path)
+    #         header_classes = project.get_or_create_group("Headers")
+    #         #print(header_classes.children[0]._get_comment())
+    #         header_list = set([child._get_comment() for child in header_classes.children])
+    #         header_dir = join(self.app_dir,"cython_headers")
+    #         #print(header_dir)
+    #         project_updated = False
+    #         for (dirpath, dirnames, filenames) in os.walk(header_dir):
+    #             for file in filenames:
+    #                 _file = join(header_dir,file)
+    #                 if file not in header_list and file != ".DS_Store":
+    #                     project.add_file(_file, parent=header_classes)
+    #                     project_updated = True
+    #         if project_updated:
+    #             project.backup()
+    #             project.save()
+    #         #print(header_classes)
 
     def build_wdog_event(self,filename):
         d = self.db.get_item(filename)
@@ -792,7 +866,7 @@ class KivySwiftLink(App):
             #self.build_log.text.__add__("Compiling:\n")
             #self.build_popup.open()
             self.sub_view.current = "log_screen"
-            thread = Thread(target=self.compiler,args=[btn,title])
+            thread = Thread(target=self.compiler,args=[btn,title,False])
             thread.start()
     
     def print_date(self,sec):
@@ -961,7 +1035,7 @@ class KivySwiftLink(App):
         #     self.command1.text = "Compile All"
         #     self.mode = 1
 
-    def compiler(self,py_sel,calltitle):
+    def compiler(self,py_sel,calltitle,refresh_framework=False):
         #build_file = join(root_path,"builds",calltitle,"module_name.json")
 
         build_file = join(self.app_dir,"builds",calltitle.lower(),"kivy_recipe.py")
@@ -996,9 +1070,11 @@ class KivySwiftLink(App):
         command = " ".join([toolchain, "build", calltitle,"--add-custom-recipe", target_path])  # the shell command
         self.execute(command,1, True,True)
         #self.update_log("Building....")
-        if self.project_target:
-            command = " ".join([toolchain, "update", self.project_target])  # the shell command
-            self.execute(command)
+        # if self.project_target:
+        #     command = " ".join([toolchain, "update", self.project_target])  # the shell command
+        #     self.execute(command)
+        if refresh_framework:
+            self.update_frameworks([calltitle])
         #remember
         #self.update_build_dict(calltitle.lower())
 
@@ -1120,11 +1196,25 @@ class KivySwiftLink(App):
             self.project_target = None
         else:
             self.project_target = config["BuildInfo"]["project_target"]
+        
+        self.load_xcode_project()
+        #print(self.project.objects)
+        #
+        export_list = []
+        # for obj in self.project.objects:
+        #     print(type(obj))
+        #     if obj:
+        #         export_list.append(obj.__repr__)
+        # with open(join(self.root_path,"project_export.txt"), 'w') as f:
+        #     sys.stdout = f # Change the standard output to the file we created.
+        #     print(self.project.objects)
+        
+
         #self.settings_cls = SettingsWithTabbedPanel
         s = Settings()
         s.add_json_panel('BuildInfo', config, join(self.app_dir,'app_config.json'))
         ids.settings_box.add_widget(s)
-        s.bind(on_config_change=print)
+        s.bind(on_config_change=self.on_config_change)
 
         
         #n1 = tv.add_node(TreeViewLabel(text='Item 1'))
@@ -1133,11 +1223,25 @@ class KivySwiftLink(App):
         # if self.project_target:
         #     ids.file_man.path = self.project_target
         return self.main
+    def load_xcode_project(self):
+        if self.project_target:
+            try:
+                target = self.project_target
+                target_name = os.path.basename(target)[:-4]
+                print("target_name: ",target_name)
+                path = "%s/%s.xcodeproj/project.pbxproj" % (target, target_name)
+                self.project = XcodeProject.load(path)
+            # for 
+            except:
+                print("project failed invalid path:", str(self.project_target))
+                return
+            
 
-    def on_config_change(self, config, section, key, value):
+    def on_config_change(self,s, config, section, key, value):
         if section == "BuildInfo":
             if key == "project_target":
                 self.project_target = value
+                #self.load_xcode_project()
 if __name__ == '__main__':
     KivySwiftLink().run()
     #_json_store.update(_json)

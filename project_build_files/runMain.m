@@ -16,8 +16,8 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 //#include "Python.h"
-#include "/Volumes/WorkSSD/kivy_ios/dist/root/python3/include/python3.8/Python.h"
-#include "/Volumes/WorkSSD/kivy_ios/dist/include/common/sdl2/SDL_main.h"
+#include "{$project_path}/dist/root/python3/include/python3.8/Python.h"
+#include "{$project_path}/dist/include/common/sdl2/SDL_main.h"
 #include <dlfcn.h>
 //#include "touchbay-Swift.h"
 
