@@ -79,7 +79,7 @@ and run the following:
 ./wrapper_tool.sh
 ```
 
-[Setting up your project and writing first Python wrapper file](https://github.com/psychowasp/PythonSwiftLink/tree/main/examples/0%20Getting%20Started)
+[Next Step - Setting up your project and writing first Python wrapper file](https://github.com/psychowasp/PythonSwiftLink/tree/main/examples/0%20Getting%20Started)
 
 [Using an example]()
 
