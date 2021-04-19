@@ -491,9 +491,28 @@ class EventHandler(FileSystemEventHandler):
     def __init__(self,app, **kwargs):
         super(EventHandler,self).__init__(**kwargs)
         self.app = app
+        self.new_file_created = False
+        
+        
+    def on_created(self, event):
+        self.app.show_imports()
+        self.new_file_created = True
 
+    def on_modified(self, event):
+        py_string = None
+        if self.new_file_created:
+            
 
-    def on_any_event(self, event):
+            if isdir(event.src_path):
+                return
+            with open(event.src_path,"r") as f:
+                
+                py_string = f.read()
+            
+        if py_string:
+            if py_string == "":
+                return
+
         app:KivySwiftLink = self.app
         file_str = os.path.basename(event.src_path)
         #event.is
@@ -504,6 +523,7 @@ class EventHandler(FileSystemEventHandler):
             
             #print (event.src_path)
             app.build_wdog_event(file_str)
+
 
 
 
@@ -530,6 +550,7 @@ class KivySwiftLink(App):
         self.project = None
         self.root_path = root_path
         self.selected_project_node = None
+        self.wrapper_files = None
         self.wdog_thread()
         self.app_dir = join(root_path,"PythonSwiftLink")
         db_path = join(root_path,"build_db.json")
@@ -915,15 +936,19 @@ class KivySwiftLink(App):
     def show_imports(self):
         #imports:GridLayout = self.imports
         #imports.clear_widgets()
-        self.wrappers.clear()
-        
-        
 
+        self.wrappers.clear()
+        if self.wrapper_files:
+            self.tv.remove_node(self.wrapper_files)
+            del self.wrapper_files
+        
+        #if not self.wrapper_files:
         self.wrapper_files = TreeGroup( text="Wrapper Files:",
                                         is_open=True,
                                         no_selection=True
                                         )
         self.tv.add_node(self.wrapper_files)
+    
         self.tv.add_node(TitleNode(),self.wrapper_files)
         #import_dir = join(self.app_dir,"imported_pys")
         import_dir = join(self.root_path,"wrapper_sources")

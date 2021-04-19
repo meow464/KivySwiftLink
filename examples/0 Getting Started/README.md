@@ -1,3 +1,15 @@
+# Creating a new project:
+
+after running ./wrapper_tool.sh
+
+you should be presented with the following screen:
+
+![Screenshot 2021-04-19 at 17.48.23](/Users/macdaw/Library/Application Support/typora-user-images/Screenshot 2021-04-19 at 17.48.23.png)
+
+
+
+
+
 # Writing first Python wrapper file:
 
 

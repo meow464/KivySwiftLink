@@ -1267,7 +1267,8 @@ class PythonCallBuilder():
                 # pprint("".join(sfunctions)
             
         if not header and not objc:
-            del sfunctions[0]
+            if len(sfunctions) != 0:
+                del sfunctions[0]
         return "\n".join( sfunctions )
 
     def gen_cython_callbacks(self, pointers:list):
