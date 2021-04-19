@@ -152,19 +152,30 @@ extension Data {
     }
 }
 
-import SwiftyJSON
-
-extension JSON {
-    func rawBytes() -> UnsafePointer<UInt8>?{
-        do {
-            let data = try self.rawData(options: .withoutEscapingSlashes)
-            return data.bytes
-        } catch {
-            print(error.localizedDescription)
-            return nil
-        }
+//import SwiftyJSON
+//
+//extension JSON {
+//    func rawBytes() -> UnsafePointer<UInt8>?{
+//        do {
+//            let data = try self.rawData(options: .withoutEscapingSlashes)
+//            return data.bytes
+//        } catch {
+//            print(error.localizedDescription)
+//            return nil
+//        }
+//    }
+//}
+func JSONBytes(object: Any) -> UnsafePointer<UInt8>? {
+    do {
+        let bytes = try JSONSerialization.data(withJSONObject: object, options: .fragmentsAllowed).bytes
+        return bytes
+    } catch {
+        print(error.localizedDescription)
     }
+    return nil
 }
+
+
 
 extension CVPixelBuffer {
     func TextureData() -> (data: UnsafeMutablePointer<UInt8>, data_size: Int , width: Int, height: Int){

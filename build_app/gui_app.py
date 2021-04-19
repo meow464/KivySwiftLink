@@ -28,6 +28,7 @@ from kivy.uix.settings import Settings
 from kivy.uix.settings import SettingsWithTabbedPanel
 from kivy.properties import ObjectProperty, StringProperty, BooleanProperty, NumericProperty
 from kivy.clock import Clock, mainthread
+from kivy.uix.popup import Popup
 import json
 import applescript
 import sys
@@ -166,9 +167,44 @@ class BuildDB:
 class TitleNode(BoxLayout,TreeViewNode):
     pass
 
+class TitleNode2(BoxLayout,TreeViewNode):
+    pass
+
 no_tex = CoreImage(join(dir_path,"icons","no.png")).texture
 yes_tex = CoreImage(join(dir_path,"icons","yes.png")).texture
 sign_tex = CoreImage(join(dir_path,"icons","sign.png")).texture
+
+class ProjectFileNode(BoxLayout,TreeViewNode):
+    text = StringProperty("")
+    is_build = NumericProperty(3)
+    compiled = NumericProperty(3)
+    build_tex = ObjectProperty(None)
+    compiled_tex = ObjectProperty(None)
+    project_selected = NumericProperty(0)
+    alpha = NumericProperty(0)
+    path: str = None
+    def __init__(self, **kw):
+        #self.no_tex = CoreImage(join(dir_path,"icons","no.png")).texture
+        self.build_tex = CoreImage(join(dir_path,"icons","yes.png")).texture
+        #self.sign_tex = CoreImage(join(dir_path,"icons","sign.png")).texture
+        text = kw.pop("text")
+        self.path = kw.pop("path")
+        #is_build = kw.pop("is_build")
+        #compiled = kw.pop("compiled")
+        super(ProjectFileNode, self).__init__(**kw)
+        self.text = text
+        #self.is_build = is_build
+        #self.compiled = compiled
+        #self.upstte(compiled)
+        
+    def on_project_selected(self,wid,value):
+        print(self.text,"alpha",value)
+        #pass
+        self.alpha = value
+
+    def update_state(self,state):
+
+        self.alpha = state
 
 class WrapperFileNode(BoxLayout,TreeViewNode):
     text = StringProperty("")
@@ -220,9 +256,38 @@ class WrapperFileNode(BoxLayout,TreeViewNode):
             self.compiled_tex = sign_tex
 
 class MainMenu(Screen):
+    wrapper_view = ObjectProperty(None)
+    build_log = ObjectProperty(None)
+    pass
+
+class StringInput(TextInput):
+
+    pat = re.compile('[^a-z]')
+    def insert_text(self, substring, from_undo=False):
+        pat = self.pat
+        s = '.'.join([re.sub(pat, '', s) for s in substring.split('.', 1)])
+        return super(StringInput, self).insert_text(s, from_undo=from_undo)
+
+class FileLoader(BoxLayout):
+    popup: ObjectProperty(None)
+    pass
+    def is_dir(self, directory, filename):
+        return isdir(join(directory, filename))
+
+class ProjectsMenu(Screen):
     project_view = ObjectProperty(None)
     build_log = ObjectProperty(None)
     pass
+
+    def show_load(self):
+        app = App.get_running_app()
+        
+        self._popup = Popup(title="Select Python Source Folder",
+                            size_hint=(0.6, 0.8))
+        content = FileLoader()
+        content.popup=self._popup
+        self._popup.content=content
+        self._popup.open()
 
 Builder.load_file(join(dir_path,"menus.kv"))
 
@@ -304,13 +369,13 @@ Builder.load_string("""
         size_hint_y: None
         height: 36
         Button:
-            text: "Main"
+            text: "Projects"
             on_release:
-                screens.current = "main_menu"
+                screens.current = "project_menu"
         Button:
             text: "Swift/OBJ-C Wrapper Generator"
             on_release:
-                screens.current = "screen0"
+                screens.current = "wrapper_menu"
         Button:
             text: "Settings"
             on_release:
@@ -322,65 +387,14 @@ Builder.load_string("""
     ScreenManager:
         id: screens
 
+        ProjectsMenu:
+            id: project_menu
+            name: "project_menu"
+
         MainMenu:
             id: main_menu
-            name: "main_menu"
-        Screen:
-            name: "screen0"
-            BoxLayout:
-                orientation: 'vertical'
-                BoxLayout:
-                    id: TopMenu
-                    size_hint_y: 0.4
-                    BoxLayout:
-                        orientation: 'vertical'
-                        #BoxLayout:
-                            
-                        Label:
-                            text: "Imported py's"
-                            size_hint_y:None
-                            height: 24
-                        ScrollView:
-                            GridLayout:
-                                cols: 1
-                                #default_row_height: 48
-                                id: imports
-                                size_hint_y: None
-                                height: self.minimum_height
-                    BoxLayout:
-                        orientation: 'vertical'
-                        Label:
-                            text: "Builds"
-                            size_hint_y:None
-                            height: 24
-                        ScrollView:
-                            GridLayout:
-                                id: builds
-                                cols: 1
-                                size_hint_y: None
-                                height: self.minimum_height
-                    BoxLayout:
-                        orientation: 'vertical'
-                        Label:
-                            text: "Commands"
-                            size_hint_y:None
-                            height: 24
-                        Button:
-                            id: command0
-                            text: "-"
-                            
-                        Button:
-                            id: command1
-                            text: "-"
-                            
-                        Button:
-                            id: command2
-                            text: "-"
-                            on_press:
-                                print("Building % Compiling All")
-                    
-                CodeViews:
-                    id: codeviews
+            name: "wrapper_menu"
+        
         Screen:
             name: "screen1"
             ProjectBuilder:
@@ -508,16 +522,21 @@ class KivySwiftLink(App):
     root_path: str
     kivy_folder:str
     kivy_recipes: str
+
+    selected_project_node: ProjectFileNode
+
     def __init__(self,root_path, **kwargs):
         super(KivySwiftLink,self).__init__(**kwargs)
         self.project = None
         self.root_path = root_path
+        self.selected_project_node = None
         self.wdog_thread()
         self.app_dir = join(root_path,"PythonSwiftLink")
         db_path = join(root_path,"build_db.json")
         print("root path:",root_path)
         self.selected_py = None
         self.wrappers: List[WrapperFileNode] = []
+        self.projects: List[ProjectFileNode] = []
         # config_str = ""
         # with open(join(self.app_dir,"config.json"),"r") as f:
         #     config_str = f.read()
@@ -702,16 +721,6 @@ class KivySwiftLink(App):
                 file = src._get_comment()
                 if file in ["main.m"]:
                     project.remove_file_by_id(ID)
-                print(str(src),src._get_comment())
-            # if os.path.exists(join(self.project_target,"main.m")):
-            #     os.remove(join(self.project_target,"main.m"))
-            # if "main.m" in sources_list:
-            #     for src in sources.children:
-            #         if src._get_comment() == "main.m":
-                        
-            #             sources.children.remove(src)
-            #             break
-            
             try:
                 project.remove_group_by_name("Classes")
             except:
@@ -745,10 +754,10 @@ class KivySwiftLink(App):
             bridge_header = join(self.project_target,f"{target_name}-Bridging-Header.h")
             if not exists(bridge_header):
                 bridge_strings = [
-                    "#import \"runMain.h\"",
+                    "\n#import \"runMain.h\"",
                     "\n\n",
-                    "//#Wrappers Start"
-                    "//Insert Your Wrapper Headers Here - <wrapper_class_name>.h//",
+                    "//#Wrappers Start",
+                    "//  Insert Your Wrapper Headers Here -> #import \"wrapper_class_name\".h//  ",
                     "\n",
                     "//#Wrappers End",
                     "\n\n",
@@ -757,61 +766,20 @@ class KivySwiftLink(App):
                 ] 
                 with open(bridge_header, "w") as b:
                     b.write("\n".join(bridge_strings))
-            #if f"{target_name}-Bridging-Header.h" not in classes_list:
+            project.set_flags("SWIFT_OBJC_BRIDGING_HEADER",f"{target_name}-Bridging-Header.h")
+            project.set_flags("SWIFT_VERSION","5.0")
+            project.set_flags("IPHONEOS_DEPLOYMENT_TARGET","11.0")
+
+
             project.add_file(bridge_header, parent=classes, force=False)
-            # pro_lines = pro_file.splitlines()
-            # for i, line in enumerate(pro_lines):
-            #     if search("SWIFT_OBJC_BRIDGING_HEADER",line):
-            #         print(line,line.count("\t"))
-            #         if not search(".*\$\{PRODUCT_NAME\}-Bridging-Header.h",line):
-            #             #print("editing line")
-            #             string = "".join(["\t" * line.count("\t"), "SWIFT_OBJC_BRIDGING_HEADER = \"${PRODUCT_NAME}-Bridging-Header.h\";"] )
-            #             #print(string)
-            #             pro_lines[i] = string
-            #             update_bridge = True
-            #project.add_header_search_paths(join(self.app_dir,"cython_headers"),False)
+
             project.add_header_search_paths(join(self.root_path,"wrapper_headers"),False)
-            #self.project.add_framework_search_paths(join(self.app_dir,"cython_headers"))
-            # for i, line in enumerate(pro_lines):
-            #     if search("SWIFT_OBJC_BRIDGING_HEADER",line):
-            #         print(line,line.count("\t"))
-            
-                # SWIFT_OBJC_BRIDGING_HEADER = "";
+
             if project_updated:
                 project.backup()
                 project.save()
-                #self.project = project = XcodeProject.load(path)
 
-            # if update_bridge:
-            #     project.backup()
-            #     project.save()
-            #     with open(path, "w") as f:
-            #         f.write("\n".join(pro_lines))
-            #     self.project = XcodeProject.load(path)
     
-    # def update_header_group(self):
-    #     if self.project_target:
-    #         target = self.project_target
-    #         target_name = os.path.basename(target)[:-4]
-    #         #print("target_name: ",target_name)
-    #         path = "%s/%s.xcodeproj/project.pbxproj" % (target, target_name)
-    #         project = XcodeProject.load(path)
-    #         header_classes = project.get_or_create_group("Headers")
-    #         #print(header_classes.children[0]._get_comment())
-    #         header_list = set([child._get_comment() for child in header_classes.children])
-    #         header_dir = join(self.app_dir,"cython_headers")
-    #         #print(header_dir)
-    #         project_updated = False
-    #         for (dirpath, dirnames, filenames) in os.walk(header_dir):
-    #             for file in filenames:
-    #                 _file = join(header_dir,file)
-    #                 if file not in header_list and file != ".DS_Store":
-    #                     project.add_file(_file, parent=header_classes)
-    #                     project_updated = True
-    #         if project_updated:
-    #             project.backup()
-    #             project.save()
-    #         #print(header_classes)
 
     def build_wdog_event(self,filename):
         d = self.db.get_item(filename)
@@ -826,18 +794,9 @@ class KivySwiftLink(App):
             compiled = 0
         
         wrap:WrapperFileNode = self.wrap_dict[filename]
-        #wrap.is_build = is_build
         wrap.update_compile(compiled)
-
         self.build_selected(wrap)
-    #     p_build = PythonCallBuilder(self.app_dir)
-        
-    #     p_build.build_py_files(filename)
-    #     calltitle = p_build.get_calltitle()
-
-    #     pack_all("master.zip",calltitle)
-    #     thread = Thread(target=self.compiler,args=[calltitle])
-    #     thread.start()
+ 
 
     def wdog_thread(self):
         event_handler = EventHandler(self)
@@ -918,11 +877,44 @@ class KivySwiftLink(App):
                 break
         return d
 
+    def create_project(self,title,path):
+        command = " ".join([toolchain, "create", title, path])  # the shell command
+        # self.execute(command,0,False)
+        subprocess.run(command, shell=True)
+        self.project_target = join(self.root_path,f"{title}-ios")
+        self.update_classes_group()
+        t = ProjectFileNode(
+                        text= f"{title}-ios",
+                        path= self.project_target
+                        )
+        self.project_tv.add_node(t,self.xcode_projects)
 
+    def show_projects(self):
+        self.xcode_projects = TreeGroup( text="Xcode Projects:",
+                                        is_open=True,
+                                        no_selection=True
+                                        )
+        self.project_tv.add_node(self.xcode_projects)
+        self.project_tv.add_node(TitleNode2(),self.xcode_projects)
+
+        import_dir = join(self.root_path)
+        for item in os.listdir(import_dir):
+            file_path = join(self.root_path,item)
+            if isdir(file_path):
+                if search(".*ios",item):
+                    for xcode_file in os.listdir(join(import_dir,file_path)):
+                        if xcode_file.endswith("xcodeproj"):
+                            t = ProjectFileNode(
+                                text=item,
+                                path=join(file_path)
+                                )
+                            self.project_tv.add_node(t,self.xcode_projects)
+                            self.projects.append(t)
+                            break
      
     def show_imports(self):
-        imports:GridLayout = self.imports
-        imports.clear_widgets()
+        #imports:GridLayout = self.imports
+        #imports.clear_widgets()
         self.wrappers.clear()
         
         
@@ -1138,45 +1130,63 @@ class KivySwiftLink(App):
             print(node.text)
         except:
             pass
+    def on_selected_project_node(self,tv,node: ProjectFileNode):
+        print(tv,node)
+        self.selected_project_node = node
 
+    def select_project(self):
+        
+        node: ProjectFileNode = self.selected_project_node
+        print("select_project",node)
+        if node:
+            self.project_target = node.path
+            print(self.projects)
+            for _node in self.projects:
+                if node == _node:
+                    _node.project_selected = 1
+                else:
+                    _node.project_selected = 0
 
     def build(self):
         self.main = MainWindow()
         ids = self.main.ids
         #print(self.main.ids)
-        self.codeviews: CodeViews = self.main.ids.codeviews
-        self.tv = ids.main_menu.project_view
-        
+        # self.codeviews: CodeViews = self.main.ids.codeviews
+        self.tv = ids.main_menu.wrapper_tree
+        self.project_tv = ids.project_menu.project_view
+
         self.tv.bind(selected_node=self.node_info)
         self.tv.bind(selected_node=self.btn_action)
+        self.project_tv.bind(selected_node=self.on_selected_project_node)
         #print(self.codeviews.ids)
-        print("working dir:",self.app_dir)
-        self.imports = ids.imports
-        self.builds = ids.builds
-        self.sm:ScreenManager = ids.screens
-        self.command0: Button = ids.command0
-        self.command0.bind(on_press=self.command_actions)
-        self.command0.idx = 0
-        self.command1: Button = ids.command1
-        self.command1.bind(on_press=self.command_actions)
-        self.command1.idx = 1
-        self.command2: Button = ids.command2
-        self.command2.bind(on_press=self.command_actions)
-        self.command2.idx = 2
+        # print("working dir:",self.app_dir)
+        # self.imports = ids.imports
+        # self.builds = ids.builds
+        # self.sm:ScreenManager = ids.screens
+        # self.command0: Button = ids.command0
+        # self.command0.bind(on_press=self.command_actions)
+        # self.command0.idx = 0
+        # self.command1: Button = ids.command1
+        # self.command1.bind(on_press=self.command_actions)
+        # self.command1.idx = 1
+        # self.command2: Button = ids.command2
+        # self.command2.bind(on_press=self.command_actions)
+        # self.command2.idx = 2
         self.sub_view = ids.main_menu.ids.sub_screen1
-        codes = self.codeviews
-        codes.ids.view1.ids.label.text = "Python Code"
-        codes.ids.view2.ids.label.text = "Cython .pyx"
-        codes.ids.view3.ids.label.text = "OBJ-C .h"
-        self.view1: CodeInput = codes.ids.view1.ids.code
-        self.view2: CodeInput = codes.ids.view2.ids.code
-        self.view2.lexer = CythonLexer()
-        self.view3: CodeInput = codes.ids.view3.ids.code
-        self.view3.lexer = ObjectiveCLexer()
+        # codes = self.codeviews
+        # codes.ids.view1.ids.label.text = "Python Code"
+        # codes.ids.view2.ids.label.text = "Cython .pyx"
+        # codes.ids.view3.ids.label.text = "OBJ-C .h"
+        # self.view1: CodeInput = codes.ids.view1.ids.code
+        # self.view2: CodeInput = codes.ids.view2.ids.code
+        # self.view2.lexer = CythonLexer()
+        # self.view3: CodeInput = codes.ids.view3.ids.code
+        # self.view3.lexer = ObjectiveCLexer()
 
         self.new_view: CodeInput = ids.main_menu.ids.py_code
         self.show_imports()
-        self.show_builds(None)
+        self.show_projects()
+        # self.show_builds(None)
         self.build_log: TextInput = ids.main_menu.ids.build_log
         # self.build_log = TextInput(
         # )
@@ -1223,6 +1233,8 @@ class KivySwiftLink(App):
         # if self.project_target:
         #     ids.file_man.path = self.project_target
         return self.main
+
+
     def load_xcode_project(self):
         if self.project_target:
             try:

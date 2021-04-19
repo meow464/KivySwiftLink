@@ -83,7 +83,7 @@ class KivyUIView: UIView {
 
 class DocumentPicker: UIViewController {
     let pick = UIDocumentPickerViewController(documentTypes: [], in: .open)
-    var callback: AppleApiCallback?
+    //var callback: AppleApiCallback?
     
     override func viewWillAppear(_ animated: Bool) {
         self.view.addSubview(pick.view)

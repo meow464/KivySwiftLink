@@ -5,6 +5,13 @@
         "desc": "Choose the font size the label",
         "section": "BuildInfo",
         "key": "project_target"
+    },
+    {
+        "type": "path",
+        "title": "Project target",
+        "desc": "Choose the font size the label",
+        "section": "BuildInfo",
+        "key": "project_target"
     }
 ]
 
