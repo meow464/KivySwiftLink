@@ -500,11 +500,13 @@ class EventHandler(FileSystemEventHandler):
 
     def on_modified(self, event):
         py_string = None
+        new = False
+        if isdir(event.src_path):
+            return
         if self.new_file_created:
-            
-
-            if isdir(event.src_path):
-                return
+            new = self.new_file_created
+            if new:
+                self.new_file_created = False
             with open(event.src_path,"r") as f:
                 
                 py_string = f.read()
@@ -522,7 +524,7 @@ class EventHandler(FileSystemEventHandler):
             #src = path + event.src_path
             
             #print (event.src_path)
-            app.build_wdog_event(file_str)
+            app.build_wdog_event(file_str,new)
 
 
 
@@ -802,7 +804,8 @@ class KivySwiftLink(App):
 
     
 
-    def build_wdog_event(self,filename):
+    def build_wdog_event(self,filename,new=False):
+        print("build_wdog_event",new)
         d = self.db.get_item(filename)
                 #print(d)
         if d:
@@ -813,10 +816,10 @@ class KivySwiftLink(App):
         else:
             is_build = 0
             compiled = 0
-        
-        wrap:WrapperFileNode = self.wrap_dict[filename]
-        wrap.update_compile(compiled)
-        self.build_selected(wrap)
+        if not new:
+            wrap:WrapperFileNode = self.wrap_dict[filename]
+            wrap.update_compile(compiled)
+            self.build_selected(wrap)
  
 
     def wdog_thread(self):
@@ -909,6 +912,7 @@ class KivySwiftLink(App):
                         path= self.project_target
                         )
         self.project_tv.add_node(t,self.xcode_projects)
+        self.projects.append(t)
 
     def show_projects(self):
         self.xcode_projects = TreeGroup( text="Xcode Projects:",
@@ -940,7 +944,7 @@ class KivySwiftLink(App):
         self.wrappers.clear()
         if self.wrapper_files:
             self.tv.remove_node(self.wrapper_files)
-            del self.wrapper_files
+            #del self.wrapper_files
         
         #if not self.wrapper_files:
         self.wrapper_files = TreeGroup( text="Wrapper Files:",
