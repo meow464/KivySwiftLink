@@ -4,7 +4,7 @@ after running ./wrapper_tool.sh
 
 you should be presented with the following screen:
 
-![Screenshot 2021-04-19 at 17.48.23](images/Screenshot 2021-04-19 at 17.48.23.png)
+![Screenshot 2021-04-19 at 17.48.23](images/Screenshot 2021-04-19 at 17.48.23-9106191.png)
 
 
 
