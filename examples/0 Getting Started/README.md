@@ -4,7 +4,7 @@ after running ./wrapper_tool.sh
 
 you should be presented with the following screen:
 
-![Screenshot 2021-04-19 at 17.48.23](images/Screenshot 2021-04-19 at 17.48.23-9106191.png)
+![Screenshot 2021-04-19 at 17.48.23](https://raw.githubusercontent.com/psychowasp/PythonSwiftLink/testing/examples/0%20Getting%20Started/images/Screenshot%202021-04-19%20at%2017.48.23.png)
 
 
 
@@ -56,18 +56,10 @@ run:
 
 ```sh
 python3 main.py
+
 ```
 
-![gui_app0](https://user-images.githubusercontent.com/2526171/112910616-02e64f00-90f4-11eb-8abe-0af156a55f9a.png)
-![gui_app1](https://user-images.githubusercontent.com/2526171/112910962-b2bbbc80-90f4-11eb-8a0a-20a7d3b23f86.png)
-![gui_app2](https://user-images.githubusercontent.com/2526171/112911028-d8e15c80-90f4-11eb-9a47-138cf0a7e462.png)
-![gui_app3](https://user-images.githubusercontent.com/2526171/112911111-0c23eb80-90f5-11eb-857b-80ae4365a74e.png)
-
 ## Xcode Project Setup
-
-![Skærmbillede 2021-03-31 kl  03 50 57](https://user-images.githubusercontent.com/2526171/113078924-59c35580-91d4-11eb-8d05-5c7e68d09fb4.png)
-
-${PRODUCT_NAME}-Bridging-Header.h
 
 
 
@@ -229,8 +221,7 @@ when returning to your project run the following:
 
 ```sh
 cd <path of kivy-ios root project folder>
-. venv/bin/activate
-python3 main.py
+./wrapper_tool.sh
 ```
 
 [Implementing a wrapper into a kivy app class](https://github.com/psychowasp/PythonSwiftLink/tree/main/examples/1%20Implementing%20a%20wrapper%20into%20a%20kivy%20app%20class)
