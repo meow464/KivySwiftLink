@@ -148,6 +148,7 @@ call_list_dict = {
 }
 arg_size_dict = {
         "str": 1,
+        "data": 1,
         "uint8": 1,
         "int": 4,
         "float": 4,
@@ -163,7 +164,8 @@ ptr_type_dict = {
         "long": "long",
         "double": "double",
         "uint8": "unsigned char",
-        "short": "short"
+        "short": "short",
+        
     }
 
 
@@ -428,7 +430,6 @@ class Arg():
 
         func_arg.python_name = _arg.arg
         func_arg.cy_name = _arg.arg
-        print(temp.name,func_arg.python_name)
         
         if isinstance(_arg.annotation,(ast.List,ast.Bytes)):
             arg_type = _arg.annotation.elts[0].id
@@ -819,12 +820,10 @@ class WrapClass:
         func.compare_string = compare_string
         #if 'callback' in func.decs:
         #print(compare_string not in ptr_compare, compare_string)
-        print(self.pointer_compare_strings)
         if compare_string not in self.pointer_compare_strings:
             self.pointer_compare_strings.append(compare_string)
             #ptr_types2.append(func)
             self.pointer_types.append(func)
-            print("adding:",func.name,compare_string,len(self.pointer_types))
         else:
             print(f"{func.name} already in there")
         #self.func_pointers.append(func)
@@ -837,7 +836,6 @@ class WrapClass:
         #ptr_types: List[Function] = self.pointer_types
         count = 0
         function_pointers = []
-        print("gen_cyfunction_pointers",self.pointer_types)
         for func in self.pointer_types:
             types_list = []
             _arg: Arg
@@ -1311,13 +1309,18 @@ class PythonCallBuilder():
 
     def gen_send_args(self, func_arg:Arg):
         #arg_type = func_arg.cy_type
-        if func_arg.is_list:
-            arg_size = arg_size_dict[func_arg.list_type]
+        if func_arg.is_list or func_arg.is_data:
+            if func_arg.is_data:
+                arg_size = 1
+                arg_type = 'uint8'
+            else:
+                arg_size = arg_size_dict[func_arg.list_type]
+                arg_type = func_arg.list_type
             if func_arg.list_type == "str":
                 decode = "<bytes>"#".encode('utf-8')"
                 array_line = strlist_2_array.format(
                     arg = func_arg.cy_name,
-                    arg_type = ptr_type_dict[func_arg.list_type],
+                    arg_type = ptr_type_dict[arg_type],
                     type_size = arg_size,
                     decode = decode
                 )
@@ -1325,7 +1328,7 @@ class PythonCallBuilder():
                 decode = ""
                 array_line = list_2_array.format(
                     arg = func_arg.cy_name,
-                    arg_type = ptr_type_dict[func_arg.list_type],
+                    arg_type = ptr_type_dict[arg_type],
                     type_size = arg_size,
                     decode = decode
                 )
@@ -1377,12 +1380,14 @@ class PythonCallBuilder():
         ###### body #####
         body_list = []
         func:Function
+        print(f"function {func.name} - args_: {func.args_}")
         for i, arg in enumerate(func.args_):
             if arg is not "PythonCallback":
                 _arg = self.gen_send_args(arg)
                 if _arg:
                     #type_size = arg_size_dict[_type]
                     body_list.append(_arg)
+                    print("body",_arg)
                
         p_arg_list = []
         free_list = []
@@ -1476,7 +1481,6 @@ class PythonCallBuilder():
                 types_str = ", ".join(types_list)
                 objc_arg_tmp = []
                 arg: Arg
-                print(func.args_)
                 for ie, arg in enumerate(func.args_):
                     # if arg.python_name is "":
                     #     send_arg = arg.objc_name
@@ -1489,11 +1493,14 @@ class PythonCallBuilder():
                     #objc_arg_tmp.append(tmp_str)
                     objc_arg_tmp.append(arg.gen_send(ie, objc, header))
                     #objc_arg_tmp.append(arg.objc_name)
-                print(objc_arg_tmp)
                 args2_str = " ".join(objc_arg_tmp)
                 ######## objc ############
                 if header:
-                    sfunctions.append( ext_objcfunc_h.format(title=utitle, args=types_str, returns=_rtns) )
+                    if i != 0 and not func.init_func:
+                        head_title = utitle
+                    else:
+                        head_title = func.name
+                    sfunctions.append( ext_objcfunc_h.format(title=head_title, args=types_str, returns=_rtns) )
                 else:
                     if func.init_func:
                         real_title = func.name
