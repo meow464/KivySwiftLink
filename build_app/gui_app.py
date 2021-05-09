@@ -846,6 +846,7 @@ class KivySwiftLink(App):
         if self.db.wrap_exist(btn.title):
             title = self.db.get_item(btn.title)["class_title"]
             self.build_log.text = "Compiling:\n"
+            print(f"Compiling: {title} ........... ")
             #self.build_log.text.__add__("Compiling:\n")
             #self.build_popup.open()
             self.sub_view.current = "log_screen"
@@ -1058,7 +1059,7 @@ class KivySwiftLink(App):
 
     def compiler(self,py_sel,calltitle,refresh_framework=False):
         #build_file = join(root_path,"builds",calltitle,"module_name.json")
-
+        print(f"compiler {calltitle.lower()}")
         build_file = join(self.app_dir,"builds",calltitle.lower(),"kivy_recipe.py")
         build_file_exist = os.path.exists( build_file )
         #target_path = join(self.kivy_recipes,calltitle)
@@ -1067,6 +1068,8 @@ class KivySwiftLink(App):
         if not os.path.exists( target_path ):
             os.makedirs(target_path)
         recipe_path = join(target_path,"__init__.py")
+        print(recipe_path, os.path.exists( recipe_path ) , build_file, build_file_exist)
+        #if os.path.exists( recipe_path ) and build_file_exist:
         if os.path.exists( recipe_path ) and build_file_exist:
             print("__init__.py Exists")
             if not cmp(build_file,recipe_path):
@@ -1081,7 +1084,7 @@ class KivySwiftLink(App):
             remove_cache_file( join(self.root_path,".cache",calltitle+"-master.zip") )
         except:
             pass
-        print(calltitle)
+        print("Cleaning",calltitle)
         self.update_log("\t%s\n\n" % calltitle)
         self.update_log("Cleaning Build\n")
         command = " ".join([toolchain, "clean", calltitle])  # the shell command
@@ -1089,6 +1092,7 @@ class KivySwiftLink(App):
         self.update_log("Building....\n")
         # command = " ".join([toolchain, "build", calltitle])  # the shell command
         command = " ".join([toolchain, "build", calltitle,"--add-custom-recipe", target_path])  # the shell command
+        print(target_path)
         self.execute(command,1, True,True)
         #self.update_log("Building....")
         # if self.project_target:
