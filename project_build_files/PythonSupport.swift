@@ -36,6 +36,16 @@ extension UnsafePointer where Pointee == Int8 {
     }
 }
 
+extension UnsafePointer where Pointee == UInt8 {
+    func asArray(withLength length: Int) -> [UInt8] {
+        return Array(UnsafeBufferPointer(start: self, count: length))
+        
+    }
+    func asData(withLength length: Int) -> Data {
+        return Data(UnsafeBufferPointer(start: self, count: length))
+        
+    }
+}
 
 func xibToDictionary() -> [String:Any] {
     var dict: [String:Any] = [:]
