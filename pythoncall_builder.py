@@ -20,6 +20,8 @@ import string
 
 from typing import List
 
+from PythonSwiftLink.def_types import types2dict
+
 
 
 print(os.path.basename(sys.argv[0]))
@@ -31,142 +33,172 @@ root_path = os.path.dirname(sys.argv[0])
 #calltitle = None 
 
 
-ctypedef_types_dict = {
-    "str": "const char*",
-    "int": "int",
-    "float": "float",
-    "long": "long",
-    "object": "const void*",
-    "json": "const char*",
-    "jsondata": "const unsigned char*",
-    "bytes": "const char*",
+# ctypedef_types_dict = {
+#     "str": "const char*",
+#     "int": "int",
+#     "float": "float",
+#     "long": "long",
+#     "object": "const void*",
+#     "json": "const char*",
+#     "jsondata": "const unsigned char*",
+#     "bytes": "const char*",
+#     "short": "short",
 
-    "data": "const unsigned char*",
+#     "data": "const unsigned char*",
 
-    "bool": "bool_t",
+#     "uint8": "unsigned char",
 
-    "PythonCallback": "PythonCallback"
-}
+#     "bool": "bool_t",
 
-ctypedef_list_dict = {
-    "int": "const int*",
-    "long": "const long*",
-    "uint8": "const unsigned char*",
-    "float": "const float*",
-    "double": "const double*",
-    "str": "const char* const*",
-    "short": "const short*"
+#     "PythonCallback": "PythonCallback"
+# }
+ctypedef_types_dict = types2dict("cython")
+print("\n\n\n\tctypedef_types_dict:\n")
+pprint(ctypedef_types_dict)
+ctypedef_list_dict = types2dict("cython", True)
+print("\n\n\n\tctypedef_list_dict:\n")
+pprint(ctypedef_list_dict)
+# ctypedef_list_dict = {
+#     "int": "const int*",
+#     "long": "const long*",
+#     "uint8": "const unsigned char*",
+#     "float": "const float*",
+#     "double": "const double*",
+#     "str": "const char* const*",
+#     "short": "const short*"
     
-}
+# }
+typedef_types_dict = types2dict("objc")
+print("\n\n\n\ttypedef_types_dict:\n")
+pprint(typedef_types_dict)
+# typedef_types_dict = {
 
-typedef_types_dict = {
+#     "str": "const char* _Nonnull",
+#     "int": "int",
+#     "float": "float",
+#     "long": "long",
+#     "object": "const void* _Nonnull",
+#     "json": "const char* _Nonnull",
+#     "jsondata": "const unsigned char* _Nonnull",
+#     "bytes": "const char*  _Nonnull",
+#     "data": "const unsigned char* _Nonnull",
+#     "short": "short",
+#     "bool": "BOOL",
 
-    "str": "const char* _Nonnull",
-    "int": "int",
-    "float": "float",
-    "long": "long",
-    "object": "const void* _Nonnull",
-    "json": "const char* _Nonnull",
-    "jsondata": "const unsigned char* _Nonnull",
-    "bytes": "const char*  _Nonnull",
-    "data": "const unsigned char* _Nonnull",
-    "short": "const short*  _Nonnull",
-    "bool": "BOOL",
+#     "uint8": "unsigned char",
 
+#     "PythonCallback": "PythonCallback"
+# }
 
-    "PythonCallback": "PythonCallback"
-}
+typedef_list_dict = types2dict("objc", True, True)
+print("\n\n\n\ttypedef_list_dict:\n")
+pprint(typedef_list_dict)
 
+# typedef_list_dict = {
+#     "int": "const int* _Nonnull",
+#     "long": "const long* _Nonnull",
+#     "uint8": "const unsigned char* _Nonnull",
+#     "float": "const float* _Nonnull",
+#     "double": "const double* _Nonnull",
+#     "str": "const char* _Nonnull const* _Nonnull",
+#     "short": "const short*  _Nonnull"
+# }
+python_types_dict = types2dict("python")
+print("\n\n\n\tpython_types_dict:\n")
+pprint(python_types_dict)
+# python_types_dict = {
 
-typedef_list_dict = {
-    "int": "const int* _Nonnull",
-    "long": "const long* _Nonnull",
-    "uint8": "const unsigned char* _Nonnull",
-    "float": "const float* _Nonnull",
-    "double": "const double* _Nonnull",
-    "str": "const char* _Nonnull const* _Nonnull",
-    "short": "const short*  _Nonnull"
-}
+#     "str": "str",
+#     "int": "int",
+#     "float": "float",
+#     "long": "int",
+#     "uint8": "int",
+#     "uint16": "int",
+#     "object": "object",
+#     "json" : "object",
+#     "jsondata": "object",
+#     "bytes": "bytes",
+#     "data": "bytes",
+#     "short": "int",
 
-python_types_dict = {
+#     "PythonCallback": "PythonCallback"
+# }
 
-    "str": "str",
-    "int": "int",
-    "float": "float",
-    "long": "int",
-    "object": "object",
-    "json" : "object",
-    "jsondata": "object",
-    "bytes": "bytes",
-    "data": "bytes",
-    "short": "int",
+send_args_dict = types2dict("send_arg")
+print("\n\n\n\tsend_args_dict:\n")
+pprint(send_args_dict)
+# send_args_dict = {
+#     "str": "{arg}.encode('utf-8')",
+#     "int": "{arg}",
+#     "float": "{arg}",
+#     "long": "{arg}",
+#     "object": "<const void*>{arg}",
+#     "json": "json.dumps({arg}).encode('utf-8')",
+#     "jsondata": "json.dumps({arg}).encode('utf-8')",
+#     "bytes": "{arg}",
 
-    "PythonCallback": "PythonCallback"
-}
+#     "PythonCallback": "{arg}",
+#     "": "{arg}"
+# }
+call_args_dict = types2dict("call_arg")
+print("\n\n\n\tcall_args_dict:\n")
+pprint(call_args_dict)
+# call_args_dict = {
+#     "str": "{arg}.decode('utf8')",
+#     "int": "{arg}",
+#     "float": "{arg}",
+#     "long": "{arg}",
+#     "object": "<object>{arg}",
+#     "json": "json.loads({arg})",
+#     "jsondata": "json.loads({arg}[:{arg}_size])",
+#     "bytes": "{arg}",
+#     "data": "<bytes>{arg}[0:{arg}_size]",
 
-send_args_dict = {
-    "str": "{arg}.encode('utf-8')",
-    "int": "{arg}",
-    "float": "{arg}",
-    "long": "{arg}",
-    "object": "<const void*>{arg}",
-    "json": "json.dumps({arg}).encode('utf-8')",
-    "jsondata": "json.dumps({arg}).encode('utf-8')",
-    "bytes": "{arg}",
+#     "PythonCallback": "PythonCallback"
+# }
 
-    "PythonCallback": "{arg}",
-    "": "{arg}"
-}
+call_list_dict = types2dict("list_call_arg")
+print("\n\n\n\tcall_list_dict:\n")
+pprint(call_list_dict)
 
-call_args_dict = {
-    "str": "{arg}.decode('utf8')",
-    "int": "{arg}",
-    "float": "{arg}",
-    "long": "{arg}",
-    "object": "<object>{arg}",
-    "json": "json.loads({arg})",
-    "jsondata": "json.loads({arg}[:{arg}_size])",
-    "bytes": "{arg}",
-    "data": "<bytes>{arg}[0:{arg}_size]",
+# call_list_dict = {
+#     "int": "[{arg}[x] for x in range({arg}_size)]",
+#     "long": "[{arg}[x] for x in range({arg}_size)]",
+#     "uint8": "{arg}[:{arg}_size]",
+#     "bytes": "{arg}",
+#     "data": "{arg}[:{arg}_size]",
+#     "float": "[{arg}[x] for x in range({arg}_size)]",
+#     "double": "[{arg}[x] for x in range({arg}_size)]",
+#     "str": "[{arg}[x].decode('utf8') for x in range({arg}_size)]",
+#     "PythonCallback": "PythonCallback"
+# }
 
-    "PythonCallback": "PythonCallback"
-}
-
-
-
-
-call_list_dict = {
-    "int": "[{arg}[x] for x in range({arg}_size)]",
-    "long": "[{arg}[x] for x in range({arg}_size)]",
-    "uint8": "{arg}[:{arg}_size]",
-    "bytes": "{arg}",
-    "data": "{arg}[:{arg}_size]",
-    "float": "[{arg}[x] for x in range({arg}_size)]",
-    "double": "[{arg}[x] for x in range({arg}_size)]",
-    "str": "[{arg}[x].decode('utf8') for x in range({arg}_size)]",
-    "PythonCallback": "PythonCallback"
-}
-arg_size_dict = {
-        "str": 1,
-        "data": 1,
-        "uint8": 1,
-        "int": 4,
-        "float": 4,
-        "long": 8,
-        "double": 8,
-        "short": 2,
-    }
-
-ptr_type_dict = {
-        "str": "const char*",
-        "int": "int",
-        "float": "float",
-        "long": "long",
-        "double": "double",
-        "uint8": "unsigned char",
-        "short": "short",
+arg_size_dict = types2dict("size")
+print("\n\n\n\targ_size_dict:\n")
+pprint(arg_size_dict)
+# arg_size_dict = {
+#         "str": 1,
+#         "data": 1,
+#         "uint8": 1,
+#         "int": 4,
+#         "float": 4,
+#         "long": 8,
+#         "double": 8,
+#         "short": 2,
+#     }
+ptr_type_dict = types2dict("cython")
+print("\n\n\n\tptr_type_dict:\n")
+pprint(ptr_type_dict)
+# ptr_type_dict = {
+#         "str": "const char*",
+#         "int": "long",
+#         "float": "float",
+#         "long": "long",
+#         "double": "double",
+#         "uint8": "unsigned char",
+#         "short": "short",
         
-    }
+#     }
 
 
 func_pointer_string = """\
@@ -474,7 +506,7 @@ class Arg():
             temp.arg_types.append(arg_type)
             #temp.arg_types.append(_arg.annotation.id)
             temp.python_args.append(python_types_dict[arg_type])
-            if arg_type == "json":
+            if arg_type in ("json", "jsondata"):
                 func_arg.is_json = True
 
             if arg_type in ("data","jsondata"):
@@ -1129,8 +1161,15 @@ class PythonCallBuilder():
                 cbody_del_list = []
                 for cbody in class_body.body:
                     _cdec = None
-                    dec_list = [dec.id for dec in cbody.decorator_list]
-                    
+                    decorator_list = cbody.decorator_list
+                    #dec_list = [dec.id for dec in cbody.decorator_list]
+                    dec_list = []
+
+                    for dec in decorator_list:
+                        if isinstance(dec,ast.Call):
+                            pass
+                        if isinstance(dec,ast.Name):
+                            dec_list.append(dec.id)
                     
 
                     if "callback" in dec_list:
@@ -1309,7 +1348,7 @@ class PythonCallBuilder():
 
     def gen_send_args(self, func_arg:Arg):
         #arg_type = func_arg.cy_type
-        if func_arg.is_list or func_arg.is_data:
+        if func_arg.is_list:
             if func_arg.is_data:
                 arg_size = 1
                 arg_type = 'uint8'
@@ -1325,7 +1364,13 @@ class PythonCallBuilder():
                     decode = decode
                 )
             else:
-                decode = ""
+                if func_arg.list_type == "object":
+                    if func_arg.is_data:
+                        decode = f"json.dumps({func_arg.cy_name}).encode('utf-8')"
+                    else:
+                        decode = "<const void*>"
+                else:
+                    decode = ""
                 array_line = list_2_array.format(
                     arg = func_arg.cy_name,
                     arg_type = ptr_type_dict[arg_type],
@@ -1333,9 +1378,16 @@ class PythonCallBuilder():
                     decode = decode
                 )
             return array_line
-        else: 
+        if func_arg.is_data:
+            lines = [f"cdef int {func_arg.python_name}_size = len({func_arg.python_name})"]
+            if func_arg.is_json:
+                lines.append(f"cdef bytes jbytes = json.dumps({func_arg.python_name}).encode('utf-8')")
+
+            output = "\n\t\t".join(lines)
+            return f"\t\t{output}"
+        #else: 
             #return send_args_dict[func_arg.python_type].format(arg=func_arg.python_name)
-            return None
+        return None
 
     def gen_cyfunc_sends(self, func:Function,args,args2,rtn,has_args=False):
         title = func.name
@@ -1352,7 +1404,10 @@ class PythonCallBuilder():
                     #print("gen_cyfunc_sends",_arg.python_type)
                     #args2_list.append(_arg.cy_name)
                     if _arg.is_json:
-                        args2_list.append(send_args_dict["json"].format(arg=_arg.python_name) )
+                        if _arg.is_data:
+                            args2_list.append("jbytes")
+                        else:
+                            args2_list.append(send_args_dict["json"].format(arg=_arg.python_name) )
                     else:
                         #print("send_arg name:",send_args_dict[_arg.python_type].format(arg=_arg.python_name))
                         args2_list.append(send_args_dict[_arg.python_type].format(arg=_arg.python_name) )
@@ -1360,14 +1415,14 @@ class PythonCallBuilder():
         if rtn:
             if rtn == 'str':
                 if has_args:
-                    call = "return {utitle}({args2}).decode('utf8')".format(title=title, args2= ", ".join(args2_list))
+                    call = "return {utitle}({args2}).decode('utf8')".format(utitle=utitle, args2= ", ".join(args2_list))
                 else:
-                    call = "return {utitle}().decode('utf8')".format(title=title)
+                    call = "return {utitle}().decode('utf8')".format(utitle=utitle)
             else:
                 if has_args:
-                    call = "return {utitle}({args2})".format(title=title, args2= ", ".join(args2_list))
+                    call = "return {utitle}({args2})".format(utitle=utitle, args2= ", ".join(args2_list))
                 else:
-                    call = "return {utitle}()".format(title=title)
+                    call = "return {utitle}()".format(utitle=utitle)
         else:
             if has_args:
                 #print("args2_list",args2_list)
@@ -1580,8 +1635,11 @@ class PythonCallBuilder():
                                 arg_name = call_arg.call_code
                             else:
                                 if call_arg.is_json:
+                                    if call_arg.is_data:
+                                        arg_name = call_args_dict["jsondata"].format(arg=call_arg.objc_name)
+                                    else:
                                     #print("json arg:",call_arg.python_name)
-                                    arg_name = call_args_dict["json"].format(arg=call_arg.objc_name)
+                                        arg_name = call_args_dict["json"].format(arg=call_arg.objc_name)
                                 elif call_arg.is_data:
                                     arg_name = call_args_dict["data"].format(arg=call_arg.objc_name)
                                 else:

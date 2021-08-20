@@ -10,6 +10,8 @@ import UIKit
 import AVFoundation
 import Accelerate
 
+
+
 func get_viewcontroller() -> UIViewController? {
     let window = UIApplication.shared.windows.first
     if window == nil {
@@ -47,9 +49,9 @@ extension UnsafePointer where Pointee == UInt8 {
     }
 }
 
-func xibToDictionary() -> [String:Any] {
-    var dict: [String:Any] = [:]
-    if let xib = Bundle.main.loadNibNamed("View", owner:nil, options:nil) {
+func xibToDictionary() -> [String: Any] {
+    var dict: [String: Any] = [:]
+    if let xib = Bundle.main.loadNibNamed("View", owner: nil, options: nil) {
         for item in xib {
             switch item {
             case let view as UIView:
@@ -64,7 +66,7 @@ func xibToDictionary() -> [String:Any] {
                     dict[id] = controller
                 }
             default:
-                print("not supported",item)
+                print("not supported", item)
             }
         }
     }
