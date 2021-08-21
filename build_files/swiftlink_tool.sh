@@ -51,7 +51,6 @@ elif [ "$INPUT_STRING" = "w" ]; then
     git clone https://github.com/psychowasp/PythonSwiftLink
     cp ./PythonSwiftLink/main.py ./wrapper_tool.py
     cp ./PythonSwiftLink/wrapper_tool.sh ./wrapper_tool.sh
-    cp ./PythonSwiftLink/def_types.py ./wrapper_tool.sh
     cp ./PythonSwiftLink/build_files/swift_types.py ./venv/lib/python3.8/site-packages/
     chmod +x wrapper_tool.sh
     toolchain build kivy
