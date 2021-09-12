@@ -1,15 +1,11 @@
 
-.DS_Store
+**/.DS_Store
 example.ini
 builds/
-builds/.DS_Store
-builds/.DS_Store
 Exports/Python.zip
 Python.zip
 tmp/
 *.pyc
-.DS_Store
-builds/.DS_Store
 build_files/kivy_recipe copy.py
 build_files/Setup - Kopi.py
 cython_headers/_kivytest.h
@@ -17,8 +13,5 @@ cython_headers/kivytest.h
 cython_headers/kivytest_.h
 *.zip
 imported_pys/kivytest.py
-.DS_Store
 cython_headers/_appleapi.h
-.DS_Store
-.DS_Store
-.DS_Store
+
